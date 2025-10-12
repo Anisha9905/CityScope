@@ -10,6 +10,9 @@ import { MapPin, Plus, LogOut, Cloud, Wind, Eye, Calendar, Clock, User, Phone, M
 import { useRouter } from "next/navigation"
 import NotificationBell from "@/components/notification-bell"
 import ChatbotButton from "@/components/chatbot-button"
+import pothole from "@/public/pothole.webp"
+import garbage from "@/public/garbage.png"
+import streetlight from "@/public/streetlight.png"
 
 interface Issue {
   id: number
@@ -183,29 +186,59 @@ export default function CitizenDashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Plus className="w-5 h-5" />
-                  Quick Actions
+                  Report issues and access services
                 </CardTitle>
-                <CardDescription>Report issues and access services</CardDescription>
+                <CardDescription>Select a category to Report an issue</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <Button
-                    className="h-auto p-4 gradient-bg hover:opacity-90 text-white justify-start"
-                    onClick={handleReportIssue}
-                  >
-                    <div className="text-left">
-                      <div className="font-semibold">Report New Issue</div>
-                      <div className="text-sm opacity-90">Use GPS & Camera</div>
-                    </div>
-                  </Button>
-                  <Button variant="outline" className="h-auto p-4 justify-start bg-transparent" onClick={handleViewMap}>
-                    <div className="text-left">
-                      <div className="font-semibold">View Mangalore Map</div>
-                      <div className="text-sm text-muted-foreground">See all issues</div>
-                    </div>
-                  </Button>
-                </div>
-              </CardContent>
+  <div className="grid sm:grid-cols-3 gap-4">
+    <Button
+      className="h-32 relative overflow-hidden rounded-lg text-white flex items-end p-4"
+      onClick={() => handleReportIssue()}
+      style={{
+        backgroundImage: "url('/pothole.webp')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      <div className="bg-black bg-opacity-50 w-full p-2 rounded">
+        <div className="font-semibold">Potholes</div>
+        <div className="text-sm opacity-90">Report road issues</div>
+      </div>
+    </Button>
+
+    <Button
+      className="h-32 relative overflow-hidden rounded-lg text-white flex items-end p-4"
+      onClick={() => handleReportIssue()}
+      style={{
+        backgroundImage: "url('/garbage.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      <div className="bg-black bg-opacity-50 w-full p-2 rounded">
+        <div className="font-semibold">Garbage</div>
+        <div className="text-sm opacity-90">Report garbage issues</div>
+      </div>
+    </Button>
+
+    <Button
+      className="h-32 relative overflow-hidden rounded-lg text-white flex items-end p-4"
+      onClick={() => handleReportIssue()}
+      style={{
+        backgroundImage: "url('/streetlight.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      <div className="bg-black bg-opacity-50 w-full p-2 rounded">
+        <div className="font-semibold">Streetlights</div>
+        <div className="text-sm opacity-90">Report lighting issues</div>
+      </div>
+    </Button>
+  </div>
+</CardContent>
+
             </Card>
 
             {/* My Issues */}

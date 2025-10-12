@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Users, Shield, Phone } from "lucide-react"
 import LoginModal from "@/components/login-modal"
+import login from "@/public/login.jpg"
 
 export default function HomePage() {
   const [showLogin, setShowLogin] = useState(false)
@@ -19,7 +20,16 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Gradient Background */}
-      <div className="fixed inset-0 gradient-bg opacity-10 -z-10" />
+      {/* Background Image */}
+<div
+  className="fixed inset-0 -z-10"
+  style={{
+    backgroundImage: 'url("/login.jpg")',
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+  }}
+/>
+
 
       {/* Header */}
       <header className="relative border-b bg-white/80 backdrop-blur-sm">
