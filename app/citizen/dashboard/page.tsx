@@ -23,6 +23,7 @@ import {
 import { useRouter } from "next/navigation"
 import NotificationBell from "@/components/notification-bell"
 import ChatbotButton from "@/components/chatbot-button"
+import { motion } from "framer-motion"
 
 interface Issue {
   id: number
@@ -35,12 +36,12 @@ interface Issue {
 
 export default function CitizenDashboard() {
   const router = useRouter()
-
   const [weather, setWeather] = useState({
     temp: "...",
     condition: "...",
     humidity: "...",
     windSpeed: "..."
+    windSpeed: "...",
   })
 
   const [news] = useState([
@@ -60,9 +61,15 @@ export default function CitizenDashboard() {
       { id: 3, title: "Garbage Collection Delay", status: "Pending", date: "2024-01-10" }
     ]
   })
+  // Default issues for SSR-safe render
+  const [issues, setIssues] = useState<Issue[]>([
+    { id: 1, title: "Pothole on Car Street", status: "In Progress", date: "2024-01-15" },
+    { id: 2, title: "Street Light Not Working", status: "Resolved", date: "2024-01-12" },
+    { id: 3, title: "Garbage Collection Delay", status: "Pending", date: "2024-01-10" },
+  ])
 
   const [showProfileModal, setShowProfileModal] = useState(false)
-
+  const [showBanner, setShowBanner] = useState(false)
   const handleLogout = () => router.push("/")
   const handleReportIssue = () => router.push("/map")
 
@@ -90,6 +97,14 @@ export default function CitizenDashboard() {
     const interval = setInterval(fetchWeather, 10 * 60 * 1000)
     return () => clearInterval(interval)
   }, [])
+  // Load issues from localStorage **only on client**
+  useEffect(() => {
+    const savedIssues = localStorage.getItem("citizenIssues")
+    if (savedIssues) setIssues(JSON.parse(savedIssues))
+  }, [])
+
+  const handleLogout = () => router.push("/")
+  const handleReportIssue = () => router.push("/map")
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -104,8 +119,47 @@ export default function CitizenDashboard() {
     }
   }
 
+  // -------------------- LIVE WEATHER --------------------
+  useEffect(() => {
+    async function fetchWeather() {
+      try {
+        const API_KEY = process.env.NEXT_PUBLIC_WEATHER_API_KEY
+        const city = "Mangalore"
+        const res = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`
+        )
+        const data = await res.json()
+        setWeather({
+          temp: `${Math.round(data.main.temp)}°C`,
+          condition: data.weather[0].main,
+          humidity: `${data.main.humidity}%`,
+          windSpeed: `${data.wind.speed} m/s`,
+        })
+      } catch (error) {
+        console.error("Error fetching weather:", error)
+      }
+    }
+    fetchWeather()
+    const interval = setInterval(fetchWeather, 10 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // -------------------- Scroll to bottom detection --------------------
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY
+      const windowHeight = window.innerHeight
+      const docHeight = document.body.offsetHeight
+      setShowBanner(scrollTop + windowHeight >= docHeight - 10)
+    }
+
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
   return (
     <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 relative">
       <div className="fixed inset-0 gradient-bg opacity-5 -z-10" />
 
       {/* Header */}
@@ -119,6 +173,24 @@ export default function CitizenDashboard() {
               <h1 className="text-xl font-bold gradient-text">Citizen Dashboard</h1>
               <p className="text-sm text-muted-foreground">Welcome back!</p>
             </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <NotificationBell userType="citizen" />
+            <Avatar
+              className="w-8 h-8 cursor-pointer hover:ring-2 hover:ring-blue-300 transition-all"
+              onClick={() => setShowProfileModal(true)}
+            >
+              <AvatarFallback className="gradient-bg text-white text-sm">C</AvatarFallback>
+            </Avatar>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <LogOut className="w-4 h-4 mr-2" /> Logout
+            </Button>
           </div>
           <div className="flex items-center gap-3">
             <NotificationBell userType="citizen" />
@@ -140,9 +212,9 @@ export default function CitizenDashboard() {
         </div>
       </header>
 
+      {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Quick Actions */}
             <Card>
@@ -158,6 +230,7 @@ export default function CitizenDashboard() {
                     { label: "Potholes", desc: "Report road issues", img: "/pothole.webp" },
                     { label: "Garbage", desc: "Report garbage issues", img: "/garbage.png" },
                     { label: "Streetlights", desc: "Report lighting issues", img: "/streetlight.png" }
+                    { label: "Streetlights", desc: "Report lighting issues", img: "/streetlight.png" },
                   ].map((item) => (
                     <Button
                       key={item.label}
@@ -167,6 +240,16 @@ export default function CitizenDashboard() {
                         backgroundImage: `url('${item.img}')`,
                         backgroundSize: "cover",
                         backgroundPosition: "center"
+                      onClick={() => {
+                        if (item.label === "Potholes") router.push("/map")
+                        else if (item.label === "Garbage") router.push("/report/garbage")
+                        else if (item.label === "Streetlights") router.push("/report/streetlight")
+                      }}
+                      style={{
+                        backgroundImage: `url('${item.img}')`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+>>>>>>> 32f7b27 (feat:fixed citizen chatbot and category)
                       }}
                     >
                       <div className="bg-black bg-opacity-50 w-full p-2 rounded">
@@ -205,6 +288,7 @@ export default function CitizenDashboard() {
                           <h4 className="font-medium">{issue.title}</h4>
                           <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                             <Calendar className="w-4 h-4" /> {issue.date}{" "}
+                            <Calendar className="w-4 h-4" /> {issue.date}
                             <span className="text-xs bg-gray-100 px-2 py-1 rounded">
                               Ticket #{issue.id}
                             </span>
@@ -219,9 +303,8 @@ export default function CitizenDashboard() {
             </Card>
           </div>
 
-          {/* Sidebar */}
+          {/* Sidebar - Weather & News */}
           <div className="space-y-6">
-            {/* Weather Widget */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -244,7 +327,6 @@ export default function CitizenDashboard() {
               </CardContent>
             </Card>
 
-            {/* Local News */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg">Local Updates</CardTitle>
@@ -307,7 +389,25 @@ export default function CitizenDashboard() {
         </DialogContent>
       </Dialog>
 
-      <ChatbotButton userType="citizen" />
+      {/* MCC Helpline Banner */}
+      {showBanner && (
+        <motion.div
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 100, damping: 20 }}
+          className="fixed bottom-0 left-0 w-full bg-blue-50 border-t z-40"
+        >
+          <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-center items-center gap-2 text-center">
+            <h3 className="font-semibold text-blue-700">MCC Helpline</h3>
+            <p className="text-sm text-blue-600">
+              Contact: +91 824 222 0000 | Email: help@mangalorecity.gov.in
+            </p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Chatbot button */}
+      <ChatbotButton userType="citizen" className="fixed bottom-16 right-6 z-50" />
     </div>
   )
 }
