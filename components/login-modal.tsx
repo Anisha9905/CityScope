@@ -21,6 +21,7 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
   const [step, setStep] = useState<"phone" | "otp" | "details">("phone")
   const [phoneNumber, setPhoneNumber] = useState("")
   const [otp, setOtp] = useState("")
+  const [generatedOtp, setGeneratedOtp] = useState("")
   const [loading, setLoading] = useState(false)
   const [signupData, setSignupData] = useState({
     name: "",
@@ -29,11 +30,14 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
   })
   const router = useRouter()
 
+  // ✅ Send OTP only after clicking the button
   const handleSendOTP = async () => {
     if (!phoneNumber || phoneNumber.length !== 10) return
 
     setLoading(true)
-    // Simulate OTP sending
+    const randomOtp = Math.floor(100000 + Math.random() * 900000).toString()
+    setGeneratedOtp(randomOtp)
+
     setTimeout(() => {
       setLoading(false)
       setStep("otp")
@@ -44,19 +48,13 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
     if (!otp || otp.length !== 6) return
 
     setLoading(true)
-    // Simulate OTP verification
     setTimeout(() => {
       setLoading(false)
       if (mode === "signup") {
         setStep("details")
       } else {
         onClose()
-        // Route based on user type
-        if (userType === "citizen") {
-          router.push("/citizen/dashboard")
-        } else {
-          router.push("/mcc/dashboard")
-        }
+        router.push(userType === "citizen" ? "/citizen/dashboard" : "/mcc/dashboard")
       }
     }, 1500)
   }
@@ -65,16 +63,10 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
     if (!signupData.name || !signupData.email) return
 
     setLoading(true)
-    // Simulate signup completion
     setTimeout(() => {
       setLoading(false)
       onClose()
-      // Route based on user type
-      if (userType === "citizen") {
-        router.push("/citizen/dashboard")
-      } else {
-        router.push("/mcc/dashboard")
-      }
+      router.push(userType === "citizen" ? "/citizen/dashboard" : "/mcc/dashboard")
     }, 1500)
   }
 
@@ -84,6 +76,7 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
     setPhoneNumber("")
     setOtp("")
     setSignupData({ name: "", email: "", address: "" })
+    setGeneratedOtp("")
     setLoading(false)
   }
 
@@ -113,8 +106,8 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
                     ? "Citizen Login"
                     : "MCC Staff Login"
                   : userType === "citizen"
-                    ? "Citizen Sign Up"
-                    : "MCC Staff Sign Up"}
+                  ? "Citizen Sign Up"
+                  : "MCC Staff Sign Up"}
               </DialogTitle>
               <Badge variant="outline" className="text-xs">
                 {userType === "citizen" ? "Public Access" : "Staff Access"}
@@ -123,6 +116,7 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
           </div>
         </DialogHeader>
 
+        {/* 📱 STEP 1 - Phone Input */}
         {step === "phone" ? (
           <Card className="border-0 shadow-none">
             <CardHeader className="px-0 pb-4">
@@ -136,6 +130,7 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
                   : "We'll send you a 6-digit OTP to verify your number"}
               </CardDescription>
             </CardHeader>
+
             <CardContent className="px-0 space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="phone">Mobile Number</Label>
@@ -153,6 +148,7 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
                 </div>
               </div>
 
+              {/* 👇 Button must be clicked to generate OTP */}
               <Button
                 onClick={handleSendOTP}
                 disabled={phoneNumber.length !== 10 || loading}
@@ -164,7 +160,7 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
               <div className="text-center text-sm">
                 {mode === "login" ? (
                   <span>
-                    Don't have an account?{" "}
+                    Don’t have an account?{" "}
                     <Button variant="link" className="p-0 h-auto text-blue-600" onClick={() => setMode("signup")}>
                       Sign up here
                     </Button>
@@ -181,6 +177,7 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
             </CardContent>
           </Card>
         ) : step === "otp" ? (
+          /* 🔢 STEP 2 - OTP Verification */
           <Card className="border-0 shadow-none">
             <CardHeader className="px-0 pb-4">
               <div className="flex items-center gap-2 mb-2">
@@ -189,8 +186,14 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
                 </Button>
                 <CardTitle className="text-lg">Verify OTP</CardTitle>
               </div>
-              <CardDescription>Enter the 6-digit code sent to +91 {phoneNumber}</CardDescription>
+              <CardDescription>
+                Enter the 6-digit code sent to +91 {phoneNumber}
+                {generatedOtp && (
+                  <span className="block mt-1 text-xs text-green-600">Demo OTP: {generatedOtp}</span>
+                )}
+              </CardDescription>
             </CardHeader>
+
             <CardContent className="px-0 space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="otp">OTP Code</Label>
@@ -219,6 +222,7 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
             </CardContent>
           </Card>
         ) : (
+          /* 📝 STEP 3 - Signup Details */
           <Card className="border-0 shadow-none">
             <CardHeader className="px-0 pb-4">
               <div className="flex items-center gap-2 mb-2">
@@ -232,6 +236,7 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
               </div>
               <CardDescription>Please provide your details to complete registration</CardDescription>
             </CardHeader>
+
             <CardContent className="px-0 space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name *</Label>

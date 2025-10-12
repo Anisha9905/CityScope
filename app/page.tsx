@@ -30,7 +30,7 @@ export default function HomePage() {
                 <MapPin className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold gradient-text">NammaRoads</h1>
+                <h1 className="text-xl font-bold gradient-text">CityScope</h1>
                 <p className="text-sm text-muted-foreground">Smart City Initiative</p>
               </div>
             </div>
@@ -46,10 +46,10 @@ export default function HomePage() {
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-3xl mx-auto">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Report Issues, <span className="gradient-text">Transform Our Roads</span>
+              Empower your City,<span className="gradient-text">Report today</span>
             </h2>
             <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-              Connect directly with your local authorities through NammaRoads. Report civic issues, track progress, and
+              Connect directly with your local authorities through CityScope. Report civic issues, track progress, and
               help build a better city for everyone.
             </p>
 
