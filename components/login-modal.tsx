@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,10 +17,21 @@ interface LoginModalProps {
 }
 
 export default function LoginModal({ isOpen, onClose, userType }: LoginModalProps) {
+  // mode: login or signup (both supported). For MCC we use credentials (StaffID + password) instead of phone/OTP.
   const [mode, setMode] = useState<"login" | "signup">("login")
-  const [step, setStep] = useState<"phone" | "otp" | "details">("phone")
+  // step: for citizens we use phone -> otp -> details; for MCC staff we use "credentials" -> details (if signup)
+  const [step, setStep] = useState<"phone" | "otp" | "details" | "credentials">(
+    userType === "mcc" ? "credentials" : "phone"
+  )
+
+  // Citizen states
   const [phoneNumber, setPhoneNumber] = useState("")
   const [otp, setOtp] = useState("")
+
+  // MCC staff states
+  const [staffId, setStaffId] = useState("")
+  const [password, setPassword] = useState("")
+
   const [loading, setLoading] = useState(false)
   const [signupData, setSignupData] = useState({
     name: "",
@@ -29,6 +40,15 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
   })
   const router = useRouter()
 
+  useEffect(() => {
+    // whenever modal opens, ensure correct initial step for the userType
+    if (isOpen) {
+      setMode("login")
+      setStep(userType === "mcc" ? "credentials" : "phone")
+    }
+  }, [isOpen, userType])
+
+  // Citizen flows (unchanged)
   const handleSendOTP = async () => {
     if (!phoneNumber || phoneNumber.length !== 10) return
 
@@ -78,11 +98,32 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
     }, 1500)
   }
 
+  // MCC staff credential-based login
+  const handleStaffCredentials = async () => {
+    // basic validation
+    if (!staffId || !password) return
+
+    setLoading(true)
+    // Simulate server validation
+    setTimeout(() => {
+      setLoading(false)
+      if (mode === "signup") {
+        // If you want staff signup flow, go to details to collect profile info
+        setStep("details")
+      } else {
+        onClose()
+        router.push("/mcc/dashboard")
+      }
+    }, 1200)
+  }
+
   const resetModal = () => {
     setMode("login")
-    setStep("phone")
+    setStep(userType === "mcc" ? "credentials" : "phone")
     setPhoneNumber("")
     setOtp("")
+    setStaffId("")
+    setPassword("")
     setSignupData({ name: "", email: "", address: "" })
     setLoading(false)
   }
@@ -113,8 +154,8 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
                     ? "Citizen Login"
                     : "MCC Staff Login"
                   : userType === "citizen"
-                    ? "Citizen Sign Up"
-                    : "MCC Staff Sign Up"}
+                  ? "Citizen Sign Up"
+                  : "MCC Staff Sign Up"}
               </DialogTitle>
               <Badge variant="outline" className="text-xs">
                 {userType === "citizen" ? "Public Access" : "Staff Access"}
@@ -123,7 +164,9 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
           </div>
         </DialogHeader>
 
+        {/* Render different flows based on step */}
         {step === "phone" ? (
+          // Citizen phone -> OTP flow (unchanged)
           <Card className="border-0 shadow-none">
             <CardHeader className="px-0 pb-4">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -165,14 +208,14 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
                 {mode === "login" ? (
                   <span>
                     Don't have an account?{" "}
-                    <Button variant="link" className="p-0 h-auto text-blue-600" onClick={() => setMode("signup")}>
+                    <Button variant="link" className="p-0 h-auto text-blue-600" onClick={() => setMode("signup") }>
                       Sign up here
                     </Button>
                   </span>
                 ) : (
                   <span>
                     Already have an account?{" "}
-                    <Button variant="link" className="p-0 h-auto text-blue-600" onClick={() => setMode("login")}>
+                    <Button variant="link" className="p-0 h-auto text-blue-600" onClick={() => setMode("login") }>
                       Login here
                     </Button>
                   </span>
@@ -184,7 +227,7 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
           <Card className="border-0 shadow-none">
             <CardHeader className="px-0 pb-4">
               <div className="flex items-center gap-2 mb-2">
-                <Button variant="ghost" size="sm" onClick={() => setStep("phone")} className="p-1 h-auto">
+                <Button variant="ghost" size="sm" onClick={() => setStep("phone") } className="p-1 h-auto">
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
                 <CardTitle className="text-lg">Verify OTP</CardTitle>
@@ -218,11 +261,78 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
               </Button>
             </CardContent>
           </Card>
-        ) : (
+        ) : step === "credentials" ? (
+          // MCC staff credentials (StaffID + Password) - replaces phone/OTP for MCC staff
           <Card className="border-0 shadow-none">
             <CardHeader className="px-0 pb-4">
               <div className="flex items-center gap-2 mb-2">
-                <Button variant="ghost" size="sm" onClick={() => setStep("otp")} className="p-1 h-auto">
+                {/* back button only useful if coming from details - otherwise omitted */}
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  {mode === "login" ? "Staff Login" : "Staff Sign Up"}
+                </CardTitle>
+              </div>
+              <CardDescription>
+                {mode === "login"
+                  ? "Sign in using your Staff ID and password"
+                  : "Provide a Staff ID and password to create a staff account"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-0 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="staffId">Staff ID</Label>
+                <Input
+                  id="staffId"
+                  placeholder="Enter your Staff ID"
+                  value={staffId}
+                  onChange={(e) => setStaffId(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+
+              <Button
+                onClick={handleStaffCredentials}
+                disabled={!staffId || !password || loading}
+                className="w-full gradient-bg hover:opacity-90 text-white"
+              >
+                {loading ? (mode === "login" ? "Signing in..." : "Creating...") : mode === "login" ? "Sign In" : "Continue"}
+              </Button>
+
+              <div className="text-center text-sm">
+                {mode === "login" ? (
+                  <span>
+                    Don't have a staff account?{" "}
+                    <Button variant="link" className="p-0 h-auto text-blue-600" onClick={() => setMode("signup") }>
+                      Sign up here
+                    </Button>
+                  </span>
+                ) : (
+                  <span>
+                    Already have an account?{" "}
+                    <Button variant="link" className="p-0 h-auto text-blue-600" onClick={() => setMode("login") }>
+                      Login here
+                    </Button>
+                  </span>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          // details step (used by signup flows for both citizen and staff)
+          <Card className="border-0 shadow-none">
+            <CardHeader className="px-0 pb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Button variant="ghost" size="sm" onClick={() => setStep(userType === "mcc" ? "credentials" : "otp")} className="p-1 h-auto">
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
                 <CardTitle className="text-lg flex items-center gap-2">
