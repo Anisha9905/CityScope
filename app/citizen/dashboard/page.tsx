@@ -10,9 +10,6 @@ import { MapPin, Plus, LogOut, Cloud, Wind, Eye, Calendar, Clock, User, Phone, M
 import { useRouter } from "next/navigation"
 import NotificationBell from "@/components/notification-bell"
 import ChatbotButton from "@/components/chatbot-button"
-import pothole from "@/public/pothole.webp"
-import garbage from "@/public/garbage.png"
-import streetlight from "@/public/streetlight.png"
 
 interface Issue {
   id: number
@@ -25,6 +22,7 @@ interface Issue {
 
 export default function CitizenDashboard() {
   const router = useRouter()
+
   const [weather, setWeather] = useState({
     temp: "...",
     condition: "...",
@@ -60,7 +58,7 @@ export default function CitizenDashboard() {
   useEffect(() => {
     async function fetchWeather() {
       try {
-        const API_KEY = "943f84c3c908d081d8fb6e25bd1d29ed" // <-- Replace with your API key
+        const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY
         const city = "Mangalore"
         const res = await fetch(
           `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`
@@ -78,20 +76,16 @@ export default function CitizenDashboard() {
     }
 
     fetchWeather()
-    const interval = setInterval(fetchWeather, 10 * 60 * 1000) // update every 10 minutes
+    const interval = setInterval(fetchWeather, 10 * 60 * 1000) // every 10 mins
     return () => clearInterval(interval)
   }, [])
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Resolved":
-        return "bg-green-100 text-green-800"
-      case "In Progress":
-        return "bg-blue-100 text-blue-800"
-      case "Pending":
-        return "bg-yellow-100 text-yellow-800"
-      default:
-        return "bg-gray-100 text-gray-800"
+      case "Resolved": return "bg-green-100 text-green-800"
+      case "In Progress": return "bg-blue-100 text-blue-800"
+      case "Pending": return "bg-yellow-100 text-yellow-800"
+      default: return "bg-gray-100 text-gray-800"
     }
   }
 
@@ -120,14 +114,8 @@ export default function CitizenDashboard() {
             >
               <AvatarFallback className="gradient-bg text-white text-sm">C</AvatarFallback>
             </Avatar>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-red-600 hover:text-red-700 hover:bg-red-50">
+              <LogOut className="w-4 h-4 mr-2" /> Logout
             </Button>
           </div>
         </div>
@@ -137,32 +125,38 @@ export default function CitizenDashboard() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
+
             {/* Quick Actions */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Plus className="w-5 h-5" />
-                  Quick Actions
+                  <Plus className="w-5 h-5" /> Report issues and access services
                 </CardTitle>
-                <CardDescription>Report issues and access services</CardDescription>
+                <CardDescription>Select a category to Report an issue</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <Button
-                    className="h-auto p-4 gradient-bg hover:opacity-90 text-white justify-start"
-                    onClick={handleReportIssue}
-                  >
-                    <div className="text-left">
-                      <div className="font-semibold">Report New Issue</div>
-                      <div className="text-sm opacity-90">Use GPS & Camera</div>
-                    </div>
-                  </Button>
-                  <Button variant="outline" className="h-auto p-4 justify-start bg-transparent" onClick={handleViewMap}>
-                    <div className="text-left">
-                      <div className="font-semibold">View Mangalore Map</div>
-                      <div className="text-sm text-muted-foreground">See all issues</div>
-                    </div>
-                  </Button>
+                <div className="grid sm:grid-cols-3 gap-4">
+                  {[
+                    { label: "Potholes", desc: "Report road issues", img: "/pothole.webp" },
+                    { label: "Garbage", desc: "Report garbage issues", img: "/garbage.png" },
+                    { label: "Streetlights", desc: "Report lighting issues", img: "/streetlight.png" },
+                  ].map((item) => (
+                    <Button
+                      key={item.label}
+                      className="h-32 relative overflow-hidden rounded-lg text-white flex items-end p-4"
+                      onClick={handleReportIssue}
+                      style={{
+                        backgroundImage: `url('${item.img}')`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }}
+                    >
+                      <div className="bg-black bg-opacity-50 w-full p-2 rounded">
+                        <div className="font-semibold">{item.label}</div>
+                        <div className="text-sm opacity-90">{item.desc}</div>
+                      </div>
+                    </Button>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -179,21 +173,15 @@ export default function CitizenDashboard() {
                     <div className="text-center py-8 text-muted-foreground">
                       <MapPin className="w-12 h-12 mx-auto mb-4 opacity-50" />
                       <p>No issues reported yet</p>
-                      <Button onClick={handleReportIssue} className="mt-4 gradient-bg text-white">
-                        Report Your First Issue
-                      </Button>
+                      <Button onClick={handleReportIssue} className="mt-4 gradient-bg text-white">Report Your First Issue</Button>
                     </div>
                   ) : (
                     issues.map((issue) => (
-                      <div
-                        key={issue.id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                      >
+                      <div key={issue.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                         <div className="flex-1">
                           <h4 className="font-medium">{issue.title}</h4>
                           <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                            <Calendar className="w-4 h-4" />
-                            {issue.date}
+                            <Calendar className="w-4 h-4" /> {issue.date}
                             <span className="text-xs bg-gray-100 px-2 py-1 rounded">Ticket #{issue.id}</span>
                           </div>
                         </div>
@@ -204,79 +192,59 @@ export default function CitizenDashboard() {
                 </div>
               </CardContent>
             </Card>
+
           </div>
 
-        {/* Sidebar - Weather & News */}
-        <div className="space-y-6">
-          {/* Weather Widget */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Cloud className="w-5 h-5" />
-                Mangalore Weather
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-center">
-                <div className="text-3xl font-bold gradient-text">{weather.temp}</div>
-                <div className="text-muted-foreground">{weather.condition}</div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-blue-500" />
-                  <span>{weather.humidity}</span>
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Weather Widget */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2"><Cloud className="w-5 h-5" /> Mangalore Weather</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-center">
+                  <div className="text-3xl font-bold gradient-text">{weather.temp}</div>
+                  <div className="text-muted-foreground">{weather.condition}</div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Wind className="w-4 h-4 text-blue-500" />
-                  <span>{weather.windSpeed}</span>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-center gap-2"><Eye className="w-4 h-4 text-blue-500" /> {weather.humidity}</div>
+                  <div className="flex items-center gap-2"><Wind className="w-4 h-4 text-blue-500" /> {weather.windSpeed}</div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* Local News */}
-          {/* Local News */}
-<Card>
-  <CardHeader className="pb-3">
-    <CardTitle className="text-lg">Local News</CardTitle>
-  </CardHeader>
-  <CardContent>
-    <div className="space-y-3">
-      {[
-        { id: 1, title: "New Waste Segregation Rules Implemented in Mangalore", time: "3 hours ago" },
-        { id: 2, title: "City Water Supply Schedule Updated for Kadri & Bejai", time: "6 hours ago" },
-        { id: 3, title: "MCC Launches Mobile App for Grievance Redressal", time: "12 hours ago" },
-        { id: 4, title: "Road Maintenance Work on MG Road Starts Today", time: "1 day ago" },
-        { id: 5, title: "New Traffic Signals Installed Near Central Market", time: "2 days ago" },
-      ].map((item) => (
-        <div key={item.id} className="border-l-2 border-blue-200 pl-3">
-          <h4 className="font-medium text-sm leading-tight">{item.title}</h4>
-          <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-            <Clock className="w-3 h-3" />
-            {item.time}
+            {/* Local News */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Local Updates</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {news.map((item) => (
+                    <div key={item.id} className="border-l-2 border-blue-200 pl-3">
+                      <h4 className="font-medium text-sm leading-tight">{item.title}</h4>
+                      <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                        <Clock className="w-3 h-3" /> {item.time}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </div>
-      ))}
-    </div>
-  </CardContent>
-</Card>
-
         </div>
       </div>
 
+      {/* Profile Modal */}
       <Dialog open={showProfileModal} onOpenChange={setShowProfileModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Citizen Profile
-            </DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><User className="w-5 h-5" /> Citizen Profile</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="flex items-center gap-4">
-              <Avatar className="w-16 h-16">
-                <AvatarFallback className="gradient-bg text-white text-xl">C</AvatarFallback>
-              </Avatar>
+              <Avatar className="w-16 h-16"><AvatarFallback className="gradient-bg text-white text-xl">C</AvatarFallback></Avatar>
               <div>
                 <h3 className="font-semibold text-lg">Priya Shetty</h3>
                 <p className="text-sm text-muted-foreground">Registered Citizen</p>
@@ -284,35 +252,20 @@ export default function CitizenDashboard() {
             </div>
 
             <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Phone className="w-4 h-4 text-blue-600" />
-                <span className="text-sm">+91 98765 12345</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Mail className="w-4 h-4 text-blue-600" />
-                <span className="text-sm">priya.shetty@gmail.com</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Home className="w-4 h-4 text-blue-600" />
-                <span className="text-sm">Kadri, Mangalore - 575002</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <User className="w-4 h-4 text-blue-600" />
-                <span className="text-sm">Citizen ID: CIT2024567</span>
-              </div>
+              <div className="flex items-center gap-3"><Phone className="w-4 h-4 text-blue-600" /> <span className="text-sm">+91 98765 12345</span></div>
+              <div className="flex items-center gap-3"><Mail className="w-4 h-4 text-blue-600" /> <span className="text-sm">priya.shetty@gmail.com</span></div>
+              <div className="flex items-center gap-3"><Home className="w-4 h-4 text-blue-600" /> <span className="text-sm">Kadri, Mangalore - 575002</span></div>
+              <div className="flex items-center gap-3"><User className="w-4 h-4 text-blue-600" /> <span className="text-sm">Citizen ID: CIT2024567</span></div>
             </div>
 
             <div className="pt-4 border-t">
-              <Button variant="outline" className="w-full bg-transparent">
-                Edit Profile
-              </Button>
+              <Button variant="outline" className="w-full bg-transparent">Edit Profile</Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
       <ChatbotButton userType="citizen" />
-        </div>
     </div>
   )
 }
