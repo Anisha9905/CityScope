@@ -258,6 +258,10 @@ const clearIssueFilter = () => {
     router.push("/mcc/map")
   }
 
+  const handleConstructionList = () => {
+    router.push("/mcc/construction_companies")
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Resolved":
@@ -310,7 +314,7 @@ const clearIssueFilter = () => {
       console.log("[v0] Found new issues:", newIssues.length)
       console.log(
         "[v0] New issues details:",
-        newIssues.map((issue) => ({ id: issue.id, title: issue.title })),
+        newIssues.map((issue: { id: any; title: any }) => ({ id: issue.id, title: issue.title })),
       )
       setNewIssueNotifications(newIssues)
       setShowNewIssueAlert(true)
@@ -729,10 +733,6 @@ const getFilteredIssuesByCategory = (category: string) => {
           </CardContent>
         </Card>
 
-
-
-
-
         {/* Issue Management Section */}
         <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader>
@@ -741,10 +741,19 @@ const getFilteredIssuesByCategory = (category: string) => {
                 <CardTitle className="text-xl font-bold text-gray-800">Issue Management</CardTitle>
                 <CardDescription className="text-gray-600">Manage and assign civic issues to workers</CardDescription>
               </div>
-              <Button className="bg-purple-600 hover:bg-purple-700 text-white" onClick={handleViewMap}>
-                <MapPin className="w-4 h-4 mr-2" />
-                View Map
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  className="bg-orange-600 hover:bg-orange-700 text-white" 
+                  onClick={handleConstructionList}
+                >
+                  <Building className="w-4 h-4 mr-2" />
+                  Construction List
+                </Button>
+                <Button className="bg-purple-600 hover:bg-purple-700 text-white" onClick={handleViewMap}>
+                  <MapPin className="w-4 h-4 mr-2" />
+                  View Map
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -1116,35 +1125,42 @@ const getFilteredIssuesByCategory = (category: string) => {
       <canvas ref={canvasRef} className="hidden" />
       <ChatbotButton userType="mcc" />
 
-      
-
-<Dialog open={isCategoryListOpen} onOpenChange={setIsCategoryListOpen}>
-    <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <Dialog open={isCategoryListOpen} onOpenChange={setIsCategoryListOpen}>
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-purple-700">
-                Active Reports: {selectedCategory}
+              Active Reports: {selectedCategory}
             </DialogTitle>
-            {/* ... other descriptive text ... */}
-        </DialogHeader>
+          </DialogHeader>
 
-        <div className="space-y-4 pt-4">
+          <div className="space-y-4 pt-4">
             {selectedCategory && (
-                <>
-                    {/* Maps over the filtered issues using getFilteredIssuesByCategory */}
-                    {getFilteredIssuesByCategory(selectedCategory).map((issue) => (
-                        <div key={issue.id} className="flex items-center justify-between p-4 border rounded-lg">
-                            {/* ... Issue details (Title, Ticket ID, Location, Status) ... */}
-                            <Button onClick={() => handleViewDetails(issue)}>
-                                View Details
-                            </Button>
-                        </div>
-                    ))}
-                    {/* ... Empty state message ... */}
-                </>
+              <>
+                {getFilteredIssuesByCategory(selectedCategory).map((issue) => (
+                  <div key={issue.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <h3 className="font-semibold">{issue.title}</h3>
+                      <p className="text-sm text-gray-600">Location: {issue.location}</p>
+                      <div className="flex gap-2 mt-2">
+                        <Badge className={getStatusColor(issue.status)}>{issue.status}</Badge>
+                        <Badge className={getPriorityColor(issue.priority)}>{issue.priority}</Badge>
+                      </div>
+                    </div>
+                    <Button onClick={() => handleViewDetails(issue)}>
+                      View Details
+                    </Button>
+                  </div>
+                ))}
+                {getFilteredIssuesByCategory(selectedCategory).length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No issues found for {selectedCategory}</p>
+                  </div>
+                )}
+              </>
             )}
-        </div>
-    </DialogContent>
-</Dialog>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
