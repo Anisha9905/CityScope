@@ -406,8 +406,12 @@ const [selectedCategory, setSelectedCategory] = useState("");
 
 // Function to open the dialog
 const openCategoryDialog = (category: string) => {
-    setSelectedCategory(category);
-    setIsCategoryListOpen(true);
+    if (category === "Potholes") {
+        router.push("/mcc/potholes");
+    } else {
+        setSelectedCategory(category);
+        setIsCategoryListOpen(true);
+    }
 };
 
 // Function to filter issues based on the card's label (Potholes, Garbage, Streetlights)
@@ -433,9 +437,16 @@ const getFilteredIssuesByCategory = (category: string) => {
 
 
   return (
-    
-    <div className="min-h-screen bg-gray-50">
-      <div className="fixed inset-0 gradient-accent opacity-5 -z-10" />
+    <div className="min-h-screen bg-gray-50 relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50"></div>
+        <div className="absolute top-20 left-10 w-32 h-32 bg-blue-200 rounded-full opacity-20 animate-pulse"></div>
+        <div className="absolute top-40 right-20 w-24 h-24 bg-purple-200 rounded-full opacity-30 animate-bounce"></div>
+        <div className="absolute bottom-20 left-1/4 w-40 h-40 bg-pink-200 rounded-full opacity-25 animate-pulse"></div>
+        <div className="absolute bottom-40 right-1/3 w-28 h-28 bg-indigo-200 rounded-full opacity-20 animate-bounce"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full opacity-10 animate-spin" style={{animationDuration: '20s'}}></div>
+      </div>
 
       {showNewIssueAlert && newIssueNotifications.length > 0 && (
         <div className="fixed top-4 right-4 z-50 bg-blue-600 text-white p-4 rounded-lg shadow-lg max-w-sm">
@@ -464,16 +475,16 @@ const getFilteredIssuesByCategory = (category: string) => {
         </div>
       )}
 
-      <header className="bg-white border-b sticky top-0 z-40">
+      <header className="bg-white/90 backdrop-blur-md border-b sticky top-0 z-40 shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-lg">
                 <Shield className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-purple-700">MCC Dashboard</h1>
-                <p className="text-sm text-muted-foreground">Issue Management System</p>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">MCC Dashboard</h1>
+                <p className="text-sm text-gray-600">Issue Management System</p>
               </div>
             </div>
 
@@ -549,8 +560,9 @@ const getFilteredIssuesByCategory = (category: string) => {
             </CardContent>
           </Card>
         </div>
+
         {/* Department-wise Issue Summary */}
-<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
   {/* Electricity Department */}
   <Card>
     <CardContent className="p-4">
@@ -617,106 +629,117 @@ const getFilteredIssuesByCategory = (category: string) => {
     </CardContent>
   </Card>
 </div>
-            {/* <Card>
-              
-              <CardContent>
-                <div className="grid sm:grid-cols-3 gap-4">
-                  {[
-                    { label: "Potholes", desc: " road issues", img: "/pothole.jpg" },
-                    { label: "Garbage", desc: " garbage issues", img: "/garbage.jpg" },
-                    { label: "Streetlights", desc: " lighting issues", img: "/streetlight.jpg" },
-                  ].map((item) => (
+
+        {/* Category Quick Access Section */}
+        <Card className="mb-8 shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-purple-600" />
+              Quick Access Categories
+            </CardTitle>
+            <CardDescription className="text-gray-600">
+              Click on any category to view related issues
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid sm:grid-cols-3 gap-6">
+                {[
+                    { 
+                        label: "Potholes", 
+                        desc: "Road issues", 
+                        img: "/pothole.webp", 
+                        bgClass: "bg-gradient-to-br from-gray-700 to-gray-900",
+                        icon: "🛣️",
+                        count: issues.filter(issue => 
+                            issue.title?.toLowerCase().includes("pothole") || 
+                            issue.title?.toLowerCase().includes("road") ||
+                            issue.title?.toLowerCase().includes("street")
+                        ).length
+                    },
+                    { 
+                        label: "Garbage", 
+                        desc: "Waste management", 
+                        img: "/garbage.png", 
+                        bgClass: "bg-gradient-to-br from-green-600 to-emerald-700",
+                        icon: "🗑️",
+                        count: issues.filter(issue => 
+                            issue.title?.toLowerCase().includes("garbage") || 
+                            issue.title?.toLowerCase().includes("waste") ||
+                            issue.title?.toLowerCase().includes("trash")
+                        ).length
+                    },
+                    { 
+                        label: "Streetlights", 
+                        desc: "Lighting issues", 
+                        img: "/streetlight.png", 
+                        bgClass: "bg-gradient-to-br from-yellow-500 to-orange-600",
+                        icon: "💡",
+                        count: issues.filter(issue => 
+                            issue.title?.toLowerCase().includes("light") || 
+                            issue.title?.toLowerCase().includes("streetlight") ||
+                            issue.title?.toLowerCase().includes("lamp")
+                        ).length
+                    },
+                ].map((item) => (
                     <Button
-                      key={item.label}
-                      className="h-32 relative overflow-hidden rounded-lg text-white flex items-end p-4"
-                      
-                      style={{
-                       
-                        backgroundImage: `url('${item.img}')`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                        
-                      }}
+                        key={item.label}
+                        className={`h-36 relative overflow-hidden rounded-2xl text-white shadow-xl 
+                                    flex flex-col w-full transition-all duration-300 ease-in-out 
+                                    hover:scale-105 hover:shadow-2xl active:scale-95 ${item.bgClass}
+                                    group cursor-pointer`}
+                        onClick={() => openCategoryDialog(item.label)} 
                     >
-                      <div className="bg-black bg-opacity-50 w-full p-2 rounded">
-                        <div className="font-semibold">{item.label}</div>
-                        <div className="text-sm opacity-90">{item.desc}</div>
-                      </div>
+                        {/* Background Pattern */}
+                        <div className="absolute inset-0 opacity-10">
+                            <div className="absolute top-2 right-2 text-4xl">{item.icon}</div>
+                        </div>
+                        
+                        {/* Content */}
+                        <div className="relative z-10 flex flex-col justify-between h-full p-6">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h3 className="font-bold text-xl mb-1">{item.label}</h3>
+                                    <p className="text-sm opacity-90">{item.desc}</p>
+                                </div>
+                                <div className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
+                                    <span className="text-sm font-semibold">{item.count}</span>
+                                </div>
+                            </div>
+                            
+                            {/* Bottom section with image preview */}
+                            <div className="flex items-center justify-between mt-4">
+                                <div className="text-xs opacity-75">
+                                    Click to view issues
+                                </div>
+                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/20 backdrop-blur-sm">
+                                    <img 
+                                        src={item.img} 
+                                        alt={item.label}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Hover effect overlay */}
+                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </Button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card> */}
-
-           
-
-<CardContent>
-    <div className="grid sm:grid-cols-3 gap-4">
-        {[
-            { 
-                label: "Potholes", 
-                desc: " road issues", 
-                img: "/pothole.jpg", 
-                bgClass: "bg-gray-900", // Solid Dark Background
-            },
-            { 
-                label: "Garbage", 
-                desc: " garbage issues", 
-                img: "/garbage.jpg", 
-                bgClass: "bg-gradient-to-br from-indigo-600 to-purple-600", // Blue/Purple gradient
-            },
-            { 
-                label: "Streetlights", 
-                desc: "lighting issues", 
-                img: "/streetlight.jpg", 
-                bgClass: "bg-gradient-to-br from-purple-600 to-pink-500", // Purple/Pink gradient
-            },
-        ].map((item) => (
-            <Button
-                key={item.label}
-                // Apply height, overflow, and use flex to manage internal layout
-                // ADDED `active:scale-95` and `active:opacity-80` for visual feedback instead of black flash
-                className={`h-32 relative overflow-hidden rounded-xl text-white shadow-lg 
-                            flex w-full transition-all duration-150 ease-in-out hover:scale-[1.02] 
-                            active:scale-[0.98] active:opacity-90 ${item.bgClass}`}
-                 onClick={() => openCategoryDialog(item.label)} 
-            >
-                {/* Left side: Text content */}
-                <div className="flex flex-col justify-center items-start p-4 w-2/3">
-                    <div className="font-semibold text-white text-lg text-left">{item.label}</div>
-                    <div className="text-sm text-white opacity-90 text-left">{item.desc}</div>
-                </div>
-
-                {/* Right side: Image */} 
-                <div 
-                    className="w-1/3 h-full overflow-hidden"
-                    style={{
-                        backgroundImage: `url('${item.img}')`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                        // Match outer border radius only on the right side
-                        borderTopRightRadius: '0.75rem',
-                        borderBottomRightRadius: '0.75rem',
-                    }}
-                >
-                    {/* Dark gradient overlay on image for contrast, applied to the image section itself */}
-                    <div className="absolute inset-0 bg-black opacity-30"></div> 
-                </div>
-            </Button>
-        ))}
-    </div>
-</CardContent>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
 
 
 
 
 
-        <Card>
+        {/* Issue Management Section */}
+        <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Issue Management</CardTitle>
-                <CardDescription>Manage and assign civic issues to workers</CardDescription>
+                <CardTitle className="text-xl font-bold text-gray-800">Issue Management</CardTitle>
+                <CardDescription className="text-gray-600">Manage and assign civic issues to workers</CardDescription>
               </div>
               <Button className="bg-purple-600 hover:bg-purple-700 text-white" onClick={handleViewMap}>
                 <MapPin className="w-4 h-4 mr-2" />
