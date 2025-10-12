@@ -1,36 +1,15 @@
-import type { Metadata } from 'next'
-import { GeistSans } from 'geist/font/sans'
-import { GeistMono } from 'geist/font/mono'
-import './globals.css'
-import { AuthProvider } from '@/hooks/useAuth'
+// app/layout.tsx
+import "./globals.css";
 
-export const metadata: Metadata = {
-  title: 'City-Scope',
-  description: 'Smart City Initiative - Civic Issue Reporting System',
-  generator: 'City-Scope',
-}
+export const metadata = {
+  title: "Citizen Dashboard",
+  description: "Civic app",
+};
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        <style>{`
-html {
-  font-family: ${GeistSans.style.fontFamily};
-  --font-sans: ${GeistSans.variable};
-  --font-mono: ${GeistMono.variable};
-}
-        `}</style>
-      </head>
-      <body>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
-      </body>
+      <body>{children}</body>
     </html>
-  )
+  );
 }
