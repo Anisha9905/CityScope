@@ -61,6 +61,21 @@ export default function MCCDashboard() {
 
   const router = useRouter()
 
+  // Filter for quick-type cards
+const [issueFilter, setIssueFilter] = useState<string>("")
+const [activeFilter, setActiveFilter] = useState<string>("")
+
+const handleFilterByKeyword = (keyword: string) => {
+  setIssueFilter(keyword.toLowerCase())
+  setActiveFilter(keyword)
+}
+
+const clearIssueFilter = () => {
+  setIssueFilter("")
+  setActiveFilter("")
+}
+
+
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -377,8 +392,48 @@ export default function MCCDashboard() {
       window.removeEventListener("storage", handleStorageChange)
     }
   }, [])
+  // Derived list that respects the quick card filter
+const visibleIssues = issues.filter((issue) => {
+  if (!issueFilter) return true
+  const text = `${issue.title || ""} ${issue.description || ""} ${issue.location || ""}`.toLowerCase()
+  return text.includes(issueFilter)
+})
+
+// Inside MCCDashboard functional component:
+
+const [isCategoryListOpen, setIsCategoryListOpen] = useState(false);
+const [selectedCategory, setSelectedCategory] = useState("");
+
+// Function to open the dialog
+const openCategoryDialog = (category: string) => {
+    setSelectedCategory(category);
+    setIsCategoryListOpen(true);
+};
+
+// Function to filter issues based on the card's label (Potholes, Garbage, Streetlights)
+const getFilteredIssuesByCategory = (category: string) => {
+    const categoryLower = category.toLowerCase();
+    
+    let keywords: string[] = [];
+    if (categoryLower.includes("pothole")) {
+        keywords = ["pothole", "road", "street"];
+    } else if (categoryLower.includes("garbage")) {
+        keywords = ["garbage", "waste", "trash"];
+    } else if (categoryLower.includes("streetlight")) {
+        keywords = ["light", "streetlight", "lamp", "electric"];
+    }
+
+    // Filters the main `issues` array in the MCC Dashboard
+    return issues.filter(issue => 
+        keywords.some(keyword => 
+            (issue.title?.toLowerCase().includes(keyword) || issue.description?.toLowerCase().includes(keyword))
+        )
+    );
+};
+
 
   return (
+    
     <div className="min-h-screen bg-gray-50">
       <div className="fixed inset-0 gradient-accent opacity-5 -z-10" />
 
@@ -494,6 +549,167 @@ export default function MCCDashboard() {
             </CardContent>
           </Card>
         </div>
+        {/* Department-wise Issue Summary */}
+<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+  {/* Electricity Department */}
+  <Card>
+    <CardContent className="p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground">Electricity Department</p>
+          <p className="text-2xl font-bold text-yellow-600">
+            {
+              issues.filter(
+                (issue) =>
+                  issue.title.toLowerCase().includes("light") ||
+                  issue.title.toLowerCase().includes("lamp") ||
+                  issue.title.toLowerCase().includes("electric")
+              ).length
+            }
+          </p>
+        </div>
+        <Shield className="w-8 h-8 text-yellow-500" />
+      </div>
+    </CardContent>
+  </Card>
+
+  {/* Waste Department */}
+  <Card>
+    <CardContent className="p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground">Waste Department</p>
+          <p className="text-2xl font-bold text-green-600">
+            {
+              issues.filter(
+                (issue) =>
+                  issue.title.toLowerCase().includes("garbage") ||
+                  issue.title.toLowerCase().includes("waste") ||
+                  issue.title.toLowerCase().includes("trash")
+              ).length
+            }
+          </p>
+        </div>
+        <Trash2 className="w-8 h-8 text-green-500" />
+      </div>
+    </CardContent>
+  </Card>
+
+  {/* Roads Department */}
+  <Card>
+    <CardContent className="p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground">Roads Department</p>
+          <p className="text-2xl font-bold text-blue-600">
+            {
+              issues.filter(
+                (issue) =>
+                  issue.title.toLowerCase().includes("road") ||
+                  issue.title.toLowerCase().includes("pothole") ||
+                  issue.title.toLowerCase().includes("street")
+              ).length
+            }
+          </p>
+        </div>
+        <MapPin className="w-8 h-8 text-blue-500" />
+      </div>
+    </CardContent>
+  </Card>
+</div>
+            {/* <Card>
+              
+              <CardContent>
+                <div className="grid sm:grid-cols-3 gap-4">
+                  {[
+                    { label: "Potholes", desc: " road issues", img: "/pothole.jpg" },
+                    { label: "Garbage", desc: " garbage issues", img: "/garbage.jpg" },
+                    { label: "Streetlights", desc: " lighting issues", img: "/streetlight.jpg" },
+                  ].map((item) => (
+                    <Button
+                      key={item.label}
+                      className="h-32 relative overflow-hidden rounded-lg text-white flex items-end p-4"
+                      
+                      style={{
+                       
+                        backgroundImage: `url('${item.img}')`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        
+                      }}
+                    >
+                      <div className="bg-black bg-opacity-50 w-full p-2 rounded">
+                        <div className="font-semibold">{item.label}</div>
+                        <div className="text-sm opacity-90">{item.desc}</div>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card> */}
+
+           
+
+<CardContent>
+    <div className="grid sm:grid-cols-3 gap-4">
+        {[
+            { 
+                label: "Potholes", 
+                desc: " road issues", 
+                img: "/pothole.jpg", 
+                bgClass: "bg-gray-900", // Solid Dark Background
+            },
+            { 
+                label: "Garbage", 
+                desc: " garbage issues", 
+                img: "/garbage.jpg", 
+                bgClass: "bg-gradient-to-br from-indigo-600 to-purple-600", // Blue/Purple gradient
+            },
+            { 
+                label: "Streetlights", 
+                desc: "lighting issues", 
+                img: "/streetlight.jpg", 
+                bgClass: "bg-gradient-to-br from-purple-600 to-pink-500", // Purple/Pink gradient
+            },
+        ].map((item) => (
+            <Button
+                key={item.label}
+                // Apply height, overflow, and use flex to manage internal layout
+                // ADDED `active:scale-95` and `active:opacity-80` for visual feedback instead of black flash
+                className={`h-32 relative overflow-hidden rounded-xl text-white shadow-lg 
+                            flex w-full transition-all duration-150 ease-in-out hover:scale-[1.02] 
+                            active:scale-[0.98] active:opacity-90 ${item.bgClass}`}
+                 onClick={() => openCategoryDialog(item.label)} 
+            >
+                {/* Left side: Text content */}
+                <div className="flex flex-col justify-center items-start p-4 w-2/3">
+                    <div className="font-semibold text-white text-lg text-left">{item.label}</div>
+                    <div className="text-sm text-white opacity-90 text-left">{item.desc}</div>
+                </div>
+
+                {/* Right side: Image */} 
+                <div 
+                    className="w-1/3 h-full overflow-hidden"
+                    style={{
+                        backgroundImage: `url('${item.img}')`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        // Match outer border radius only on the right side
+                        borderTopRightRadius: '0.75rem',
+                        borderBottomRightRadius: '0.75rem',
+                    }}
+                >
+                    {/* Dark gradient overlay on image for contrast, applied to the image section itself */}
+                    <div className="absolute inset-0 bg-black opacity-30"></div> 
+                </div>
+            </Button>
+        ))}
+    </div>
+</CardContent>
+
+
+
+
 
         <Card>
           <CardHeader>
@@ -876,6 +1092,36 @@ export default function MCCDashboard() {
 
       <canvas ref={canvasRef} className="hidden" />
       <ChatbotButton userType="mcc" />
+
+      
+
+<Dialog open={isCategoryListOpen} onOpenChange={setIsCategoryListOpen}>
+    <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-purple-700">
+                Active Reports: {selectedCategory}
+            </DialogTitle>
+            {/* ... other descriptive text ... */}
+        </DialogHeader>
+
+        <div className="space-y-4 pt-4">
+            {selectedCategory && (
+                <>
+                    {/* Maps over the filtered issues using getFilteredIssuesByCategory */}
+                    {getFilteredIssuesByCategory(selectedCategory).map((issue) => (
+                        <div key={issue.id} className="flex items-center justify-between p-4 border rounded-lg">
+                            {/* ... Issue details (Title, Ticket ID, Location, Status) ... */}
+                            <Button onClick={() => handleViewDetails(issue)}>
+                                View Details
+                            </Button>
+                        </div>
+                    ))}
+                    {/* ... Empty state message ... */}
+                </>
+            )}
+        </div>
+    </DialogContent>
+</Dialog>
     </div>
   )
 }
