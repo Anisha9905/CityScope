@@ -312,6 +312,7 @@ export default function CitizenDashboard() {
       </Dialog>
 
       <ChatbotButton userType="citizen" />
+        </div>
     </div>
   )
 }
