@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -24,11 +24,12 @@ interface Issue {
 }
 
 export default function CitizenDashboard() {
+  const router = useRouter()
   const [weather, setWeather] = useState({
-    temp: "28°C",
-    condition: "Partly Cloudy",
-    humidity: "75%",
-    windSpeed: "12 km/h",
+    temp: "...",
+    condition: "...",
+    humidity: "...",
+    windSpeed: "...",
   })
 
   const [news] = useState([
@@ -39,19 +40,9 @@ export default function CitizenDashboard() {
 
   const [issues, setIssues] = useState<Issue[]>(() => {
     if (typeof window !== "undefined") {
-      try {
-        const savedIssues = localStorage.getItem("citizenIssues")
-        if (savedIssues) {
-          const parsedIssues = JSON.parse(savedIssues)
-          console.log("[v0] Loaded issues from localStorage:", parsedIssues.length)
-          return parsedIssues
-        }
-      } catch (error) {
-        console.error("[v0] Error loading issues from localStorage:", error)
-      }
+      const savedIssues = localStorage.getItem("citizenIssues")
+      if (savedIssues) return JSON.parse(savedIssues)
     }
-
-    // Default issues if no saved data
     return [
       { id: 1, title: "Pothole on Car Street", status: "In Progress", date: "2024-01-15" },
       { id: 2, title: "Street Light Not Working", status: "Resolved", date: "2024-01-12" },
@@ -61,67 +52,35 @@ export default function CitizenDashboard() {
 
   const [showProfileModal, setShowProfileModal] = useState(false)
 
-  const router = useRouter()
+  const handleLogout = () => router.push("/")
+  const handleViewMap = () => router.push("/map")
+  const handleReportIssue = () => router.push("/map")
 
-  const handleLogout = () => {
-    router.push("/")
-  }
-
-  const handleViewMap = () => {
-    router.push("/map")
-  }
-
-  const handleReportIssue = () => {
-    router.push("/map")
-  }
-
-  const handleNewIssue = (newIssue: Issue) => {
-    setIssues((prev) => {
-      const updatedIssues = [newIssue, ...prev]
-
-      // Save to localStorage
+  // -------------------- LIVE WEATHER --------------------
+  useEffect(() => {
+    async function fetchWeather() {
       try {
-        localStorage.setItem("citizenIssues", JSON.stringify(updatedIssues))
-        console.log("[v0] Issues updated in localStorage")
+        const API_KEY = "943f84c3c908d081d8fb6e25bd1d29ed" // <-- Replace with your API key
+        const city = "Mangalore"
+        const res = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`
+        )
+        const data = await res.json()
+        setWeather({
+          temp: `${Math.round(data.main.temp)}°C`,
+          condition: data.weather[0].main,
+          humidity: `${data.main.humidity}%`,
+          windSpeed: `${data.wind.speed} m/s`,
+        })
       } catch (error) {
-        console.error("[v0] Error saving to localStorage:", error)
-      }
-
-      return updatedIssues
-    })
-
-    console.log("[v0] 🚨 MCC DASHBOARD NOTIFICATION:")
-    console.log("[v0] New issue reported by citizen")
-    console.log("[v0] Issue details:", {
-      ticketId: newIssue.id,
-      title: newIssue.title,
-      status: newIssue.status,
-      location: newIssue.location || "Location not specified",
-      reportedAt: new Date().toLocaleString(),
-      requiresAssignment: true,
-    })
-
-    // Simulate real-time notification to MCC
-    if (typeof window !== "undefined") {
-      try {
-        const mccNotifications = JSON.parse(localStorage.getItem("mccNotifications") || "[]")
-        const notification = {
-          id: Date.now(),
-          type: "new_issue",
-          title: "New Issue Reported",
-          message: `${newIssue.title} - Ticket #${newIssue.id}`,
-          issueId: newIssue.id,
-          timestamp: new Date().toISOString(),
-          read: false,
-        }
-        mccNotifications.unshift(notification)
-        localStorage.setItem("mccNotifications", JSON.stringify(mccNotifications))
-        console.log("[v0] MCC notification saved to localStorage")
-      } catch (error) {
-        console.error("[v0] Error saving MCC notification:", error)
+        console.error("Error fetching weather:", error)
       }
     }
-  }
+
+    fetchWeather()
+    const interval = setInterval(fetchWeather, 10 * 60 * 1000) // update every 10 minutes
+    return () => clearInterval(interval)
+  }, [])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -138,41 +97,38 @@ export default function CitizenDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Gradient Background */}
       <div className="fixed inset-0 gradient-bg opacity-5 -z-10" />
 
       {/* Header */}
       <header className="bg-white border-b sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg gradient-bg flex items-center justify-center">
-                <MapPin className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold gradient-text">Citizen Dashboard</h1>
-                <p className="text-sm text-muted-foreground">Welcome back!</p>
-              </div>
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg gradient-bg flex items-center justify-center">
+              <MapPin className="w-6 h-6 text-white" />
             </div>
+            <div>
+              <h1 className="text-xl font-bold gradient-text">Citizen Dashboard</h1>
+              <p className="text-sm text-muted-foreground">Welcome back!</p>
+            </div>
+          </div>
 
-            <div className="flex items-center gap-3">
-              <NotificationBell userType="citizen" />
-              <Avatar
-                className="w-8 h-8 cursor-pointer hover:ring-2 hover:ring-blue-300 transition-all"
-                onClick={() => setShowProfileModal(true)}
-              >
-                <AvatarFallback className="gradient-bg text-white text-sm">C</AvatarFallback>
-              </Avatar>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            </div>
+          <div className="flex items-center gap-3">
+            <NotificationBell userType="citizen" />
+            <Avatar
+              className="w-8 h-8 cursor-pointer hover:ring-2 hover:ring-blue-300 transition-all"
+              onClick={() => setShowProfileModal(true)}
+            >
+              <AvatarFallback className="gradient-bg text-white text-sm">C</AvatarFallback>
+            </Avatar>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
           </div>
         </div>
       </header>
@@ -186,59 +142,29 @@ export default function CitizenDashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Plus className="w-5 h-5" />
-                  Report issues and access services
+                  Quick Actions
                 </CardTitle>
-                <CardDescription>Select a category to Report an issue</CardDescription>
+                <CardDescription>Report issues and access services</CardDescription>
               </CardHeader>
               <CardContent>
-  <div className="grid sm:grid-cols-3 gap-4">
-    <Button
-      className="h-32 relative overflow-hidden rounded-lg text-white flex items-end p-4"
-      onClick={() => handleReportIssue()}
-      style={{
-        backgroundImage: "url('/pothole.webp')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
-      <div className="bg-black bg-opacity-50 w-full p-2 rounded">
-        <div className="font-semibold">Potholes</div>
-        <div className="text-sm opacity-90">Report road issues</div>
-      </div>
-    </Button>
-
-    <Button
-      className="h-32 relative overflow-hidden rounded-lg text-white flex items-end p-4"
-      onClick={() => handleReportIssue()}
-      style={{
-        backgroundImage: "url('/garbage.png')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
-      <div className="bg-black bg-opacity-50 w-full p-2 rounded">
-        <div className="font-semibold">Garbage</div>
-        <div className="text-sm opacity-90">Report garbage issues</div>
-      </div>
-    </Button>
-
-    <Button
-      className="h-32 relative overflow-hidden rounded-lg text-white flex items-end p-4"
-      onClick={() => handleReportIssue()}
-      style={{
-        backgroundImage: "url('/streetlight.png')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
-      <div className="bg-black bg-opacity-50 w-full p-2 rounded">
-        <div className="font-semibold">Streetlights</div>
-        <div className="text-sm opacity-90">Report lighting issues</div>
-      </div>
-    </Button>
-  </div>
-</CardContent>
-
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Button
+                    className="h-auto p-4 gradient-bg hover:opacity-90 text-white justify-start"
+                    onClick={handleReportIssue}
+                  >
+                    <div className="text-left">
+                      <div className="font-semibold">Report New Issue</div>
+                      <div className="text-sm opacity-90">Use GPS & Camera</div>
+                    </div>
+                  </Button>
+                  <Button variant="outline" className="h-auto p-4 justify-start bg-transparent" onClick={handleViewMap}>
+                    <div className="text-left">
+                      <div className="font-semibold">View Mangalore Map</div>
+                      <div className="text-sm text-muted-foreground">See all issues</div>
+                    </div>
+                  </Button>
+                </div>
+              </CardContent>
             </Card>
 
             {/* My Issues */}
@@ -280,54 +206,61 @@ export default function CitizenDashboard() {
             </Card>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Weather Widget */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Cloud className="w-5 h-5" />
-                  Mangalore Weather
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center">
-                  <div className="text-3xl font-bold gradient-text">{weather.temp}</div>
-                  <div className="text-muted-foreground">{weather.condition}</div>
+        {/* Sidebar - Weather & News */}
+        <div className="space-y-6">
+          {/* Weather Widget */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Cloud className="w-5 h-5" />
+                Mangalore Weather
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-center">
+                <div className="text-3xl font-bold gradient-text">{weather.temp}</div>
+                <div className="text-muted-foreground">{weather.condition}</div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-blue-500" />
+                  <span>{weather.humidity}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Eye className="w-4 h-4 text-blue-500" />
-                    <span>{weather.humidity}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Wind className="w-4 h-4 text-blue-500" />
-                    <span>{weather.windSpeed}</span>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Wind className="w-4 h-4 text-blue-500" />
+                  <span>{weather.windSpeed}</span>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* Local News */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Local Updates</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {news.map((item) => (
-                    <div key={item.id} className="border-l-2 border-blue-200 pl-3">
-                      <h4 className="font-medium text-sm leading-tight">{item.title}</h4>
-                      <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                        <Clock className="w-3 h-3" />
-                        {item.time}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+          {/* Local News */}
+          {/* Local News */}
+<Card>
+  <CardHeader className="pb-3">
+    <CardTitle className="text-lg">Local News</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <div className="space-y-3">
+      {[
+        { id: 1, title: "New Waste Segregation Rules Implemented in Mangalore", time: "3 hours ago" },
+        { id: 2, title: "City Water Supply Schedule Updated for Kadri & Bejai", time: "6 hours ago" },
+        { id: 3, title: "MCC Launches Mobile App for Grievance Redressal", time: "12 hours ago" },
+        { id: 4, title: "Road Maintenance Work on MG Road Starts Today", time: "1 day ago" },
+        { id: 5, title: "New Traffic Signals Installed Near Central Market", time: "2 days ago" },
+      ].map((item) => (
+        <div key={item.id} className="border-l-2 border-blue-200 pl-3">
+          <h4 className="font-medium text-sm leading-tight">{item.title}</h4>
+          <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+            <Clock className="w-3 h-3" />
+            {item.time}
           </div>
+        </div>
+      ))}
+    </div>
+  </CardContent>
+</Card>
+
         </div>
       </div>
 
