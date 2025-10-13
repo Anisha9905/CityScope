@@ -270,6 +270,11 @@ const clearIssueFilter = () => {
   const handleMakeProject = () => {
     router.push("/mcc/project_report")
   }
+  }
+
+  const handleConstructionList = () => {
+    router.push("/mcc/construction_companies")
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -323,6 +328,7 @@ const clearIssueFilter = () => {
       console.log("[v0] Found new issues:", newIssues.length)
       console.log(
         "[v0] New issues details:",
+        newIssues.map((issue: { id: any; title: any }) => ({ id: issue.id, title: issue.title })),
         newIssues.map((issue: { id: any; title: any }) => ({ id: issue.id, title: issue.title })),
       )
       setNewIssueNotifications(newIssues)
@@ -753,6 +759,103 @@ const getFilteredIssuesByCategory = (category: string) => {
   </CardContent>
 </Card>
 
+        <Card className="mb-8 shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-purple-600" />
+              Quick Access Categories
+            </CardTitle>
+            <CardDescription className="text-gray-600">
+              Click on any category to view related issues
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid sm:grid-cols-3 gap-6">
+                {[
+                    { 
+                        label: "Potholes", 
+                        desc: "Road issues", 
+                        img: "/pothole.webp", 
+                        bgClass: "bg-gradient-to-br from-gray-700 to-gray-900",
+                        icon: "🛣️",
+                        count: issues.filter(issue => 
+                            issue.title?.toLowerCase().includes("pothole") || 
+                            issue.title?.toLowerCase().includes("road") ||
+                            issue.title?.toLowerCase().includes("street")
+                        ).length
+                    },
+                    { 
+                        label: "Garbage", 
+                        desc: "Waste management", 
+                        img: "/garbage.png", 
+                        bgClass: "bg-gradient-to-br from-green-600 to-emerald-700",
+                        icon: "🗑️",
+                        count: issues.filter(issue => 
+                            issue.title?.toLowerCase().includes("garbage") || 
+                            issue.title?.toLowerCase().includes("waste") ||
+                            issue.title?.toLowerCase().includes("trash")
+                        ).length
+                    },
+                    { 
+                        label: "Streetlights", 
+                        desc: "Lighting issues", 
+                        img: "/streetlight.png", 
+                        bgClass: "bg-gradient-to-br from-yellow-500 to-orange-600",
+                        icon: "💡",
+                        count: issues.filter(issue => 
+                            issue.title?.toLowerCase().includes("light") || 
+                            issue.title?.toLowerCase().includes("streetlight") ||
+                            issue.title?.toLowerCase().includes("lamp")
+                        ).length
+                    },
+                ].map((item) => (
+                    <Button
+                        key={item.label}
+                        className={`h-36 relative overflow-hidden rounded-2xl text-white shadow-xl 
+                                    flex flex-col w-full transition-all duration-300 ease-in-out 
+                                    hover:scale-105 hover:shadow-2xl active:scale-95 ${item.bgClass}
+                                    group cursor-pointer`}
+                        onClick={() => openCategoryDialog(item.label)} 
+                    >
+                        {/* Background Pattern */}
+                        <div className="absolute inset-0 opacity-10">
+                            <div className="absolute top-2 right-2 text-4xl">{item.icon}</div>
+                        </div>
+                        
+                        {/* Content */}
+                        <div className="relative z-10 flex flex-col justify-between h-full p-6">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h3 className="font-bold text-xl mb-1">{item.label}</h3>
+                                    <p className="text-sm opacity-90">{item.desc}</p>
+                                </div>
+                                <div className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
+                                    <span className="text-sm font-semibold">{item.count}</span>
+                                </div>
+                            </div>
+                            
+                            {/* Bottom section with image preview */}
+                            <div className="flex items-center justify-between mt-4">
+                                <div className="text-xs opacity-75">
+                                    Click to view issues
+                                </div>
+                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/20 backdrop-blur-sm">
+                                    <img 
+                                        src={item.img} 
+                                        alt={item.label}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Hover effect overlay */}
+                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </Button>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Issue Management Section */}
         <Card className="shadow-xl border-0 bg-blue-100/80 backdrop-blur-sm rounded-xl transition-all hover:shadow-2xl hover:scale-[1.02]">
@@ -770,6 +873,19 @@ const getFilteredIssuesByCategory = (category: string) => {
                   <FileText className="w-4 h-4 mr-2" />
                   Make a Project
                 </Button>
+                <Button 
+                  className="bg-orange-600 hover:bg-orange-700 text-white" 
+                  onClick={handleConstructionList}
+                >
+                  <Building className="w-4 h-4 mr-2" />
+                  Construction List
+                </Button>
+                <Button className="bg-purple-600 hover:bg-purple-700 text-white" onClick={handleViewMap}>
+                  <MapPin className="w-4 h-4 mr-2" />
+                  View Map
+                </Button>
+              </div>
+              <div className="flex gap-2">
                 <Button 
                   className="bg-orange-600 hover:bg-orange-700 text-white" 
                   onClick={handleConstructionList}
@@ -1156,11 +1272,17 @@ const getFilteredIssuesByCategory = (category: string) => {
       <Dialog open={isCategoryListOpen} onOpenChange={setIsCategoryListOpen}>
         <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
+      <Dialog open={isCategoryListOpen} onOpenChange={setIsCategoryListOpen}>
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-purple-700">
+              Active Reports: {selectedCategory}
               Active Reports: {selectedCategory}
             </DialogTitle>
           </DialogHeader>
+          </DialogHeader>
 
+          <div className="space-y-4 pt-4">
           <div className="space-y-4 pt-4">
             {selectedCategory && (
               <>
@@ -1185,7 +1307,32 @@ const getFilteredIssuesByCategory = (category: string) => {
                   </div>
                 )}
               </>
+              <>
+                {getFilteredIssuesByCategory(selectedCategory).map((issue) => (
+                  <div key={issue.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <h3 className="font-semibold">{issue.title}</h3>
+                      <p className="text-sm text-gray-600">Location: {issue.location}</p>
+                      <div className="flex gap-2 mt-2">
+                        <Badge className={getStatusColor(issue.status)}>{issue.status}</Badge>
+                        <Badge className={getPriorityColor(issue.priority)}>{issue.priority}</Badge>
+                      </div>
+                    </div>
+                    <Button onClick={() => handleViewDetails(issue)}>
+                      View Details
+                    </Button>
+                  </div>
+                ))}
+                {getFilteredIssuesByCategory(selectedCategory).length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No issues found for {selectedCategory}</p>
+                  </div>
+                )}
+              </>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
           </div>
         </DialogContent>
       </Dialog>
