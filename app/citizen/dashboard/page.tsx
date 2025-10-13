@@ -1,5 +1,5 @@
 "use client"
-import { Users } from "lucide-react"
+import { Users, MapPin, Plus, LogOut, Cloud, Wind, Eye, Calendar, Clock, User, Phone, Mail, Home } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
@@ -27,7 +27,7 @@ import ChatbotButton from "@/components/chatbot-button"
 
 interface Issue {
   id: number
-  title: string
+  title: string // exact issue type: "Potholes", "Garbage", "Streetlights"
   status: "Pending" | "In Progress" | "Resolved"
   date: string
   photos?: string[]
@@ -41,11 +41,8 @@ export default function CitizenDashboard() {
     temp: "...",
     condition: "...",
     humidity: "...",
-<<<<<<< HEAD
     windSpeed: "...",
-=======
     windSpeed: "..."
->>>>>>> a23438daf5284144bdbec04b606772f9c9ab57b8
   })
 
   const [news] = useState([
@@ -54,7 +51,6 @@ export default function CitizenDashboard() {
     { id: 3, title: "Water Supply Disruption Notice", time: "1 day ago" },
   ])
 
-<<<<<<< HEAD
   const [issues, setIssues] = useState<Issue[]>(() => {
     if (typeof window !== "undefined") {
       const savedIssues = localStorage.getItem("citizenIssues")
@@ -66,23 +62,20 @@ export default function CitizenDashboard() {
       { id: 3, title: "Garbage Collection Delay", status: "Pending", date: "2024-01-10" },
     ]
   })
-=======
   const [issues, setIssues] = useState<Issue[]>([
     { id: 1, title: "Pothole on Car Street", status: "In Progress", date: "2024-01-15" },
     { id: 2, title: "Street Light Not Working", status: "Resolved", date: "2024-01-12" },
     { id: 3, title: "Garbage Collection Delay", status: "Pending", date: "2024-01-10" }
   ])
->>>>>>> a23438daf5284144bdbec04b606772f9c9ab57b8
 
+  const [issues, setIssues] = useState<Issue[]>([])
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [showBanner, setShowBanner] = useState(false)
 
   const handleLogout = () => router.push("/")
   const handleReportIssue = () => router.push("/map")
 
-<<<<<<< HEAD
   // -------------------- LIVE WEATHER --------------------
-=======
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Resolved":
@@ -97,7 +90,6 @@ export default function CitizenDashboard() {
   }
 
   // Fetch weather safely
->>>>>>> a23438daf5284144bdbec04b606772f9c9ab57b8
   useEffect(() => {
     async function fetchWeather() {
       try {
@@ -107,14 +99,12 @@ export default function CitizenDashboard() {
           `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`
         )
         const data = await res.json()
-<<<<<<< HEAD
         setWeather({
           temp: `${Math.round(data.main.temp)}°C`,
           condition: data.weather[0].main,
           humidity: `${data.main.humidity}%`,
           windSpeed: `${data.wind.speed} m/s`,
         })
-=======
 
         if (data?.main) {
           setWeather({
@@ -123,10 +113,7 @@ export default function CitizenDashboard() {
             humidity: `${data.main.humidity}%`,
             windSpeed: `${data.wind?.speed ?? "..."} m/s`
           })
-        } else {
-          console.error("Weather API returned unexpected data:", data)
         }
->>>>>>> a23438daf5284144bdbec04b606772f9c9ab57b8
       } catch (error) {
         console.error("Error fetching weather:", error)
       }
@@ -145,7 +132,6 @@ export default function CitizenDashboard() {
       const docHeight = document.body.offsetHeight
       setShowBanner(scrollTop + windowHeight >= docHeight - 10)
     }
-
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
@@ -162,6 +148,11 @@ export default function CitizenDashboard() {
         return "bg-gray-100 text-gray-800"
     }
   }
+  // Load issues from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("citizenIssues")
+    if (saved) setIssues(JSON.parse(saved))
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50 relative">
@@ -189,8 +180,6 @@ export default function CitizenDashboard() {
               <AvatarFallback className="gradient-bg text-white text-sm">C</AvatarFallback>
             </Avatar>
             <Button
-<<<<<<< HEAD
-=======
   variant="ghost"
   size="sm"
   onClick={() => router.push("/citizen/community")}
@@ -198,9 +187,14 @@ export default function CitizenDashboard() {
 >
   <Users className="w-4 h-4" /> Go to Community
 </Button>
-
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push("/citizen/community")}
+              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 flex items-center gap-1"
+            >
+              <Users className="w-4 h-4" /> Go to Community
+            </Button>
             <Button
->>>>>>> a23438daf5284144bdbec04b606772f9c9ab57b8
               variant="ghost"
               size="sm"
               onClick={handleLogout}
@@ -211,9 +205,7 @@ export default function CitizenDashboard() {
           </div>
         </div>
       </header>
-
       {/* Main Content */}
-<<<<<<< HEAD
       <div className="container mx-auto px-4 py-6">
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
@@ -295,7 +287,6 @@ export default function CitizenDashboard() {
               </CardContent>
             </Card>
           </div>
-=======
       <div className="container mx-auto px-4 py-6 grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           {/* Quick Actions */}
@@ -309,18 +300,14 @@ export default function CitizenDashboard() {
             <CardContent>
               <div className="grid sm:grid-cols-3 gap-4">
                 {[
-                  { label: "Potholes", desc: "Report road issues", img: "/pothole.webp" },
-                  { label: "Garbage", desc: "Report garbage issues", img: "/garbage.png" },
-                  { label: "Streetlights", desc: "Report lighting issues", img: "/streetlight.png" }
+                  { label: "Potholes", path: "/map", img: "/pothole.webp" },
+                  { label: "Garbage", path: "/report/garbage", img: "/garbage.png" },
+                  { label: "Streetlights", path: "/report/streetlight", img: "/streetlight.png" }
                 ].map((item) => (
                   <Button
                     key={item.label}
                     className="h-32 relative overflow-hidden rounded-lg text-white flex items-end p-4"
-                    onClick={() => {
-                      if (item.label === "Potholes") router.push("/map")
-                      else if (item.label === "Garbage") router.push("/report/garbage")
-                      else if (item.label === "Streetlights") router.push("/report/streetlight")
-                    }}
+                    onClick={() => router.push(item.path)}
                     style={{
                       backgroundImage: `url('${item.img}')`,
                       backgroundSize: "cover",
@@ -329,15 +316,12 @@ export default function CitizenDashboard() {
                   >
                     <div className="bg-black bg-opacity-50 w-full p-2 rounded">
                       <div className="font-semibold">{item.label}</div>
-                      <div className="text-sm opacity-90">{item.desc}</div>
                     </div>
                   </Button>
                 ))}
               </div>
             </CardContent>
           </Card>
->>>>>>> a23438daf5284144bdbec04b606772f9c9ab57b8
-
           {/* My Issues */}
           <Card>
             <CardHeader>
@@ -360,7 +344,7 @@ export default function CitizenDashboard() {
                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex-1">
-                      <h4 className="font-medium">{issue.title}</h4>
+                      <h4 className="font-medium">{issue.title}</h4> {/* exact issue type */}
                       <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                         <Calendar className="w-4 h-4" /> {issue.date}
                         <span className="text-xs bg-gray-100 px-2 py-1 rounded">Ticket #{issue.id}</span>
@@ -475,4 +459,4 @@ export default function CitizenDashboard() {
       <ChatbotButton userType="citizen" className="fixed bottom-16 right-6 z-50" />
     </div>
   )
-} 
+}

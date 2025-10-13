@@ -62,31 +62,49 @@ export default function ReportGarbagePage() {
       return
     }
 
-    // Prepare new issue
+    // Generate new issue
+    const id = Date.now()
+    const date = new Date().toLocaleDateString("en-GB")
+    const imageUrl = photo ? URL.createObjectURL(photo) : null
+    const title = `${issueType} - ${binsAffected}`
+
     const newIssue = {
-      id: Date.now(),
-      title: `${issueType} - ${binsAffected}`,
+      id,
+      title,
       status: "Pending",
-      date: new Date().toLocaleDateString(),
+      date,
       location,
       gps,
       landmark,
       brief,
       details,
       contact,
-      photo: photo ? URL.createObjectURL(photo) : null,
+      photo: imageUrl,
     }
 
-    // Save to localStorage
-    const savedIssues = localStorage.getItem("citizenIssues")
-    const issuesArray = savedIssues ? JSON.parse(savedIssues) : []
-    issuesArray.push(newIssue)
-    localStorage.setItem("citizenIssues", JSON.stringify(issuesArray))
+    // 1️⃣ Save to Citizen Dashboard (My Reported Issues)
+    const savedIssues = JSON.parse(localStorage.getItem("citizenIssues") || "[]")
+    savedIssues.push(newIssue)
+    localStorage.setItem("citizenIssues", JSON.stringify(savedIssues))
 
-    toast.success("✅ Garbage issue reported successfully!")
+    // 2️⃣ Also Save to Community Feed
+    const savedPosts = JSON.parse(localStorage.getItem("communityPosts") || "[]")
+    savedPosts.push({
+      id,
+      user: "You",
+      content: title,
+      image: imageUrl,
+      likes: 0,
+      reposts: 0,
+      reports: 0,
+      comments: [],
+    })
+    localStorage.setItem("communityPosts", JSON.stringify(savedPosts))
 
-    // Redirect back to dashboard
-    router.push("/citizen/dashboard")
+    toast.success("✅ Issue added to My Reports and Community Feed!")
+
+    // 3️⃣ Redirect to Community Page
+    router.push("/citizen/community")
   }
 
   return (
@@ -105,12 +123,12 @@ export default function ReportGarbagePage() {
         </Button>
       </div>
 
-      {/* Report Box with animation */}
+      {/* Form Box */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md h-[85vh] overflow-y-auto" // scrollable
+        className="w-full max-w-md h-[85vh] overflow-y-auto"
       >
         <Card className="shadow-lg bg-white">
           <CardHeader>
@@ -137,10 +155,10 @@ export default function ReportGarbagePage() {
                     <SelectValue placeholder="Select an issue type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="not_collected">Garbage not collected</SelectItem>
-                    <SelectItem value="overflowing">Overflowing bins</SelectItem>
-                    <SelectItem value="illegal_dumping">Illegal dumping / littering</SelectItem>
-                    <SelectItem value="hazardous">Hazardous / bio-waste</SelectItem>
+                    <SelectItem value="Garbage not collected">Garbage not collected</SelectItem>
+                    <SelectItem value="Overflowing bins">Overflowing bins</SelectItem>
+                    <SelectItem value="Illegal dumping / littering">Illegal dumping / littering</SelectItem>
+                    <SelectItem value="Hazardous / bio-waste">Hazardous / bio-waste</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -195,7 +213,7 @@ export default function ReportGarbagePage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium">Take Photo / Upload File</label>
+                <label className="text-sm font-medium">Upload Photo</label>
                 <Input
                   type="file"
                   accept="image/*"
@@ -203,6 +221,7 @@ export default function ReportGarbagePage() {
                 />
               </div>
 
+              {/* Buttons */}
               <div className="flex justify-between mt-4">
                 <Button
                   type="button"
