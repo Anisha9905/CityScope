@@ -1285,57 +1285,22 @@ const getFilteredIssuesByCategory = (category: string) => {
           <div className="space-y-4 pt-4">
           <div className="space-y-4 pt-4">
             {selectedCategory && (
-              <>
-                {getFilteredIssuesByCategory(selectedCategory).map((issue) => (
-                  <div key={issue.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h3 className="font-semibold">{issue.title}</h3>
-                      <p className="text-sm text-gray-600">Location: {issue.location}</p>
-                      <div className="flex gap-2 mt-2">
-                        <Badge className={getStatusColor(issue.status)}>{issue.status}</Badge>
-                        <Badge className={getPriorityColor(issue.priority)}>{issue.priority}</Badge>
-                      </div>
-                    </div>
-                    <Button onClick={() => handleViewDetails(issue)}>
-                      View Details
-                    </Button>
-                  </div>
-                ))}
-                {getFilteredIssuesByCategory(selectedCategory).length === 0 && (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">No issues found for {selectedCategory}</p>
-                  </div>
-                )}
-              </>
-              <>
-                {getFilteredIssuesByCategory(selectedCategory).map((issue) => (
-                  <div key={issue.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h3 className="font-semibold">{issue.title}</h3>
-                      <p className="text-sm text-gray-600">Location: {issue.location}</p>
-                      <div className="flex gap-2 mt-2">
-                        <Badge className={getStatusColor(issue.status)}>{issue.status}</Badge>
-                        <Badge className={getPriorityColor(issue.priority)}>{issue.priority}</Badge>
-                      </div>
-                    </div>
-                    <Button onClick={() => handleViewDetails(issue)}>
-                      View Details
-                    </Button>
-                  </div>
-                ))}
-                {getFilteredIssuesByCategory(selectedCategory).length === 0 && (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">No issues found for {selectedCategory}</p>
-                  </div>
-                )}
-              </>
+                <>
+                    {/* Maps over the filtered issues using getFilteredIssuesByCategory */}
+                    {getFilteredIssuesByCategory(selectedCategory).map((issue) => (
+                        <div key={issue.id} className="flex items-center justify-between p-4 border rounded-lg">
+                            {/* ... Issue details (Title, Ticket ID, Location, Status) ... */}
+                            <Button onClick={() => handleViewDetails(issue)}>
+                                View Details
+                            </Button>
+                        </div>
+                    ))}
+                    {/* ... Empty state message ... */}
+                </>
             )}
-          </div>
-        </DialogContent>
-      </Dialog>
-          </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+    </DialogContent>
+</Dialog>
     </div>
   )
 }

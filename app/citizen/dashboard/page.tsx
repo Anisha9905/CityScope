@@ -1,4 +1,5 @@
 "use client"
+
 import { Users, MapPin, Plus, LogOut, Cloud, Wind, Eye, Calendar, Clock, User, Phone, Mail, Home } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -8,20 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import {
-  MapPin,
-  Plus,
-  LogOut,
-  Cloud,
-  Wind,
-  Eye,
-  Calendar,
-  Clock,
-  User,
-  Phone,
-  Mail,
-  Home,
-} from "lucide-react"
 import NotificationBell from "@/components/notification-bell"
 import ChatbotButton from "@/components/chatbot-button"
 
@@ -42,7 +29,6 @@ export default function CitizenDashboard() {
     condition: "...",
     humidity: "...",
     windSpeed: "...",
-    windSpeed: "..."
   })
 
   const [news] = useState([
@@ -62,13 +48,6 @@ export default function CitizenDashboard() {
       { id: 3, title: "Garbage Collection Delay", status: "Pending", date: "2024-01-10" },
     ]
   })
-  const [issues, setIssues] = useState<Issue[]>([
-    { id: 1, title: "Pothole on Car Street", status: "In Progress", date: "2024-01-15" },
-    { id: 2, title: "Street Light Not Working", status: "Resolved", date: "2024-01-12" },
-    { id: 3, title: "Garbage Collection Delay", status: "Pending", date: "2024-01-10" }
-  ])
-
-  const [issues, setIssues] = useState<Issue[]>([])
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [showBanner, setShowBanner] = useState(false)
 
@@ -76,18 +55,7 @@ export default function CitizenDashboard() {
   const handleReportIssue = () => router.push("/map")
 
   // -------------------- LIVE WEATHER --------------------
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Resolved":
-        return "bg-green-100 text-green-800"
-      case "In Progress":
-        return "bg-blue-100 text-blue-800"
-      case "Pending":
-        return "bg-yellow-100 text-yellow-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
+  // Removed duplicate getStatusColor function
 
   // Fetch weather safely
   useEffect(() => {
@@ -179,7 +147,7 @@ export default function CitizenDashboard() {
             >
               <AvatarFallback className="gradient-bg text-white text-sm">C</AvatarFallback>
             </Avatar>
-            <Button
+<Button
   variant="ghost"
   size="sm"
   onClick={() => router.push("/citizen/community")}
@@ -187,13 +155,6 @@ export default function CitizenDashboard() {
 >
   <Users className="w-4 h-4" /> Go to Community
 </Button>
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push("/citizen/community")}
-              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 flex items-center gap-1"
-            >
-              <Users className="w-4 h-4" /> Go to Community
-            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -284,121 +245,10 @@ export default function CitizenDashboard() {
                     ))
                   )}
                 </div>
-              </CardContent>
+      </CardContent>
             </Card>
           </div>
-      <div className="container mx-auto px-4 py-6 grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Plus className="w-5 h-5" /> Report issues and access services
-              </CardTitle>
-              <CardDescription>Select a category to Report an issue</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid sm:grid-cols-3 gap-4">
-                {[
-                  { label: "Potholes", path: "/map", img: "/pothole.webp" },
-                  { label: "Garbage", path: "/report/garbage", img: "/garbage.png" },
-                  { label: "Streetlights", path: "/report/streetlight", img: "/streetlight.png" }
-                ].map((item) => (
-                  <Button
-                    key={item.label}
-                    className="h-32 relative overflow-hidden rounded-lg text-white flex items-end p-4"
-                    onClick={() => router.push(item.path)}
-                    style={{
-                      backgroundImage: `url('${item.img}')`,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center"
-                    }}
-                  >
-                    <div className="bg-black bg-opacity-50 w-full p-2 rounded">
-                      <div className="font-semibold">{item.label}</div>
-                    </div>
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          {/* My Issues */}
-          <Card>
-            <CardHeader>
-              <CardTitle>My Reported Issues ({issues.length})</CardTitle>
-              <CardDescription>Track the status of your complaints</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {issues.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <MapPin className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No issues reported yet</p>
-                  <Button onClick={handleReportIssue} className="mt-4 gradient-bg text-white">
-                    Report Your First Issue
-                  </Button>
-                </div>
-              ) : (
-                issues.map((issue) => (
-                  <div
-                    key={issue.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex-1">
-                      <h4 className="font-medium">{issue.title}</h4> {/* exact issue type */}
-                      <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                        <Calendar className="w-4 h-4" /> {issue.date}
-                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">Ticket #{issue.id}</span>
-                      </div>
-                    </div>
-                    <Badge className={getStatusColor(issue.status)}>{issue.status}</Badge>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
         </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Cloud className="w-5 h-5" /> Mangalore Weather
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-center">
-              <div className="text-3xl font-bold gradient-text">{weather.temp}</div>
-              <div className="text-muted-foreground">{weather.condition}</div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-blue-500" /> {weather.humidity}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Wind className="w-4 h-4 text-blue-500" /> {weather.windSpeed}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Local Updates</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {news.map((item) => (
-                  <div key={item.id} className="border-l-2 border-blue-200 pl-3">
-                    <h4 className="font-medium text-sm leading-tight">{item.title}</h4>
-                    <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                      <Clock className="w-3 h-3" /> {item.time}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
 
       {/* Profile Modal */}
       <Dialog open={showProfileModal} onOpenChange={setShowProfileModal}>
@@ -437,6 +287,8 @@ export default function CitizenDashboard() {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Add closing tag for main content container */}
+      </div>
 
       {/* MCC Helpline Banner */}
       {showBanner && (
@@ -454,7 +306,6 @@ export default function CitizenDashboard() {
           </div>
         </motion.div>
       )}
-
       {/* Chatbot Button */}
       <ChatbotButton userType="citizen" className="fixed bottom-16 right-6 z-50" />
     </div>
