@@ -18,7 +18,7 @@ import {
   User,
   Phone,
   Mail,
-  Home
+  Home,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import NotificationBell from "@/components/notification-bell"
@@ -36,18 +36,18 @@ interface Issue {
 
 export default function CitizenDashboard() {
   const router = useRouter()
+
   const [weather, setWeather] = useState({
     temp: "...",
     condition: "...",
     humidity: "...",
-    windSpeed: "..."
     windSpeed: "...",
   })
 
   const [news] = useState([
     { id: 1, title: "New Bus Route Added to Kadri-Bejai", time: "2 hours ago" },
     { id: 2, title: "Road Maintenance Work on MG Road", time: "5 hours ago" },
-    { id: 3, title: "Water Supply Disruption Notice", time: "1 day ago" }
+    { id: 3, title: "Water Supply Disruption Notice", time: "1 day ago" },
   ])
 
   const [issues, setIssues] = useState<Issue[]>(() => {
@@ -58,18 +58,13 @@ export default function CitizenDashboard() {
     return [
       { id: 1, title: "Pothole on Car Street", status: "In Progress", date: "2024-01-15" },
       { id: 2, title: "Street Light Not Working", status: "Resolved", date: "2024-01-12" },
-      { id: 3, title: "Garbage Collection Delay", status: "Pending", date: "2024-01-10" }
+      { id: 3, title: "Garbage Collection Delay", status: "Pending", date: "2024-01-10" },
     ]
   })
-  // Default issues for SSR-safe render
-  const [issues, setIssues] = useState<Issue[]>([
-    { id: 1, title: "Pothole on Car Street", status: "In Progress", date: "2024-01-15" },
-    { id: 2, title: "Street Light Not Working", status: "Resolved", date: "2024-01-12" },
-    { id: 3, title: "Garbage Collection Delay", status: "Pending", date: "2024-01-10" },
-  ])
 
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [showBanner, setShowBanner] = useState(false)
+
   const handleLogout = () => router.push("/")
   const handleReportIssue = () => router.push("/map")
 
@@ -78,52 +73,6 @@ export default function CitizenDashboard() {
     async function fetchWeather() {
       try {
         const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY
-        const city = "Mangalore"
-        const res = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`
-        )
-        const data = await res.json()
-        setWeather({
-          temp: `${Math.round(data.main.temp)}°C`,
-          condition: data.weather[0].main,
-          humidity: `${data.main.humidity}%`,
-          windSpeed: `${data.wind.speed} m/s`
-        })
-      } catch (error) {
-        console.error("Error fetching weather:", error)
-      }
-    }
-    fetchWeather()
-    const interval = setInterval(fetchWeather, 10 * 60 * 1000)
-    return () => clearInterval(interval)
-  }, [])
-  // Load issues from localStorage **only on client**
-  useEffect(() => {
-    const savedIssues = localStorage.getItem("citizenIssues")
-    if (savedIssues) setIssues(JSON.parse(savedIssues))
-  }, [])
-
-  const handleLogout = () => router.push("/")
-  const handleReportIssue = () => router.push("/map")
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Resolved":
-        return "bg-green-100 text-green-800"
-      case "In Progress":
-        return "bg-blue-100 text-blue-800"
-      case "Pending":
-        return "bg-yellow-100 text-yellow-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-
-  // -------------------- LIVE WEATHER --------------------
-  useEffect(() => {
-    async function fetchWeather() {
-      try {
-        const API_KEY = process.env.NEXT_PUBLIC_WEATHER_API_KEY
         const city = "Mangalore"
         const res = await fetch(
           `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`
@@ -157,8 +106,20 @@ export default function CitizenDashboard() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Resolved":
+        return "bg-green-100 text-green-800"
+      case "In Progress":
+        return "bg-blue-100 text-blue-800"
+      case "Pending":
+        return "bg-yellow-100 text-yellow-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
     <div className="min-h-screen bg-gray-50 relative">
       <div className="fixed inset-0 gradient-bg opacity-5 -z-10" />
 
@@ -192,23 +153,6 @@ export default function CitizenDashboard() {
               <LogOut className="w-4 h-4 mr-2" /> Logout
             </Button>
           </div>
-          <div className="flex items-center gap-3">
-            <NotificationBell userType="citizen" />
-            <Avatar
-              className="w-8 h-8 cursor-pointer hover:ring-2 hover:ring-blue-300 transition-all"
-              onClick={() => setShowProfileModal(true)}
-            >
-              <AvatarFallback className="gradient-bg text-white text-sm">C</AvatarFallback>
-            </Avatar>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              <LogOut className="w-4 h-4 mr-2" /> Logout
-            </Button>
-          </div>
         </div>
       </header>
 
@@ -222,24 +166,18 @@ export default function CitizenDashboard() {
                 <CardTitle className="flex items-center gap-2">
                   <Plus className="w-5 h-5" /> Report issues and access services
                 </CardTitle>
-                <CardDescription>Select a category to Report an issue</CardDescription>
+                <CardDescription>Select a category to report an issue</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid sm:grid-cols-3 gap-4">
                   {[
                     { label: "Potholes", desc: "Report road issues", img: "/pothole.webp" },
                     { label: "Garbage", desc: "Report garbage issues", img: "/garbage.png" },
-                    { label: "Streetlights", desc: "Report lighting issues", img: "/streetlight.png" }
                     { label: "Streetlights", desc: "Report lighting issues", img: "/streetlight.png" },
                   ].map((item) => (
                     <Button
                       key={item.label}
                       className="h-32 relative overflow-hidden rounded-lg text-white flex items-end p-4"
-                      onClick={handleReportIssue}
-                      style={{
-                        backgroundImage: `url('${item.img}')`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center"
                       onClick={() => {
                         if (item.label === "Potholes") router.push("/map")
                         else if (item.label === "Garbage") router.push("/report/garbage")
@@ -249,7 +187,6 @@ export default function CitizenDashboard() {
                         backgroundImage: `url('${item.img}')`,
                         backgroundSize: "cover",
                         backgroundPosition: "center",
->>>>>>> 32f7b27 (feat:fixed citizen chatbot and category)
                       }}
                     >
                       <div className="bg-black bg-opacity-50 w-full p-2 rounded">
@@ -287,7 +224,6 @@ export default function CitizenDashboard() {
                         <div className="flex-1">
                           <h4 className="font-medium">{issue.title}</h4>
                           <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                            <Calendar className="w-4 h-4" /> {issue.date}{" "}
                             <Calendar className="w-4 h-4" /> {issue.date}
                             <span className="text-xs bg-gray-100 px-2 py-1 rounded">
                               Ticket #{issue.id}

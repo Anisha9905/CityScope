@@ -11,6 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import pothole from "@/public/pothole.webp"
+import garbage from "@/public/garbage.png"
+import streetlight from "@/public/streetlight.png"
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Shield,
@@ -30,6 +34,8 @@ import {
   Phone,
   Mail,
   Building,
+  TrendingUp ,
+  FileText,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import NotificationBell from "@/components/notification-bell"
@@ -258,6 +264,13 @@ const clearIssueFilter = () => {
     router.push("/mcc/map")
   }
 
+  const handleConstructionList = () => {
+    router.push("/mcc/construction_companies")
+  }
+  const handleMakeProject = () => {
+    router.push("/mcc/project_report")
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Resolved":
@@ -310,7 +323,7 @@ const clearIssueFilter = () => {
       console.log("[v0] Found new issues:", newIssues.length)
       console.log(
         "[v0] New issues details:",
-        newIssues.map((issue) => ({ id: issue.id, title: issue.title })),
+        newIssues.map((issue: { id: any; title: any }) => ({ id: issue.id, title: issue.title })),
       )
       setNewIssueNotifications(newIssues)
       setShowNewIssueAlert(true)
@@ -406,13 +419,21 @@ const [selectedCategory, setSelectedCategory] = useState("");
 
 // Function to open the dialog
 const openCategoryDialog = (category: string) => {
+  const urlCategory = encodeURIComponent(category);
     if (category === "Potholes") {
         router.push("/mcc/potholes");
-    } else {
+    } 
+    else if (category === "Garbage" ) {
+        router.push(`/issue?category=${urlCategory}`);
+    }else {
         setSelectedCategory(category);
         setIsCategoryListOpen(true);
     }
+    
 };
+const handlePredictiveClick = () => {
+      router.push(`/Predictive-analysis`);
+  };
 
 // Function to filter issues based on the card's label (Potholes, Garbage, Streetlights)
 const getFilteredIssuesByCategory = (category: string) => {
@@ -427,7 +448,7 @@ const getFilteredIssuesByCategory = (category: string) => {
         keywords = ["light", "streetlight", "lamp", "electric"];
     }
 
-    // Filters the main `issues` array in the MCC Dashboard
+    // Filters the main issues array in the MCC Dashboard
     return issues.filter(issue => 
         keywords.some(keyword => 
             (issue.title?.toLowerCase().includes(keyword) || issue.description?.toLowerCase().includes(keyword))
@@ -512,239 +533,255 @@ const getFilteredIssuesByCategory = (category: string) => {
 
       <div className="container mx-auto px-4 py-6">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Issues</p>
-                  <p className="text-2xl font-bold">{stats.totalIssues}</p>
-                </div>
-                <Users className="w-8 h-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
+         <Card className="shadow-xl bg-blue-100 rounded-lg">
+  <CardContent className="p-4">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm text-blue-700">Total Issues</p>
+        <p className="text-2xl font-bold text-blue-900">{stats.totalIssues}</p>
+      </div>
+      <Users className="w-8 h-8 text-purple-600" />
+    </div>
+  </CardContent>
+</Card>
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Pending</p>
-                  <p className="text-2xl font-bold text-yellow-600">{stats.pendingIssues}</p>
-                </div>
-                <Clock className="w-8 h-8 text-yellow-500" />
-              </div>
-            </CardContent>
-          </Card>
+          <Card className="shadow-xl bg-blue-100 rounded-lg">
+  <CardContent className="p-4">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm text-blue-700">Pending</p>
+        <p className="text-2xl font-bold text-blue-900">{stats.pendingIssues}</p>
+      </div>
+      <Clock className="w-8 h-8 text-yellow-600" />
+    </div>
+  </CardContent>
+</Card>
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">In Progress</p>
-                  <p className="text-2xl font-bold text-blue-600">{stats.inProgress}</p>
-                </div>
-                <AlertTriangle className="w-8 h-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
+          <Card className="shadow-xl bg-blue-100 rounded-lg">
+  <CardContent className="p-4">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm text-blue-700">In Progress</p>
+        <p className="text-2xl font-bold text-blue-900">{stats.inProgress}</p>
+      </div>
+      <AlertTriangle className="w-8 h-8 text-purple-600" />
+    </div>
+  </CardContent>
+</Card>
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Resolved</p>
-                  <p className="text-2xl font-bold text-green-600">{stats.resolved}</p>
-                </div>
-                <CheckCircle className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
+          <Card className="shadow-xl bg-blue-100 rounded-lg">
+  <CardContent className="p-4">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm text-blue-700">Resolved</p>
+        <p className="text-2xl font-bold text-blue-900">{stats.resolved}</p>
+      </div>
+      <CheckCircle className="w-8 h-8 text-purple-600" />
+    </div>
+  </CardContent>
+</Card>
+
         </div>
 
         {/* Department-wise Issue Summary */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-  {/* Electricity Department */}
-  <Card>
-    <CardContent className="p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">Electricity Department</p>
-          <p className="text-2xl font-bold text-yellow-600">
-            {
-              issues.filter(
-                (issue) =>
-                  issue.title.toLowerCase().includes("light") ||
-                  issue.title.toLowerCase().includes("lamp") ||
-                  issue.title.toLowerCase().includes("electric")
-              ).length
-            }
-          </p>
-        </div>
-        <Shield className="w-8 h-8 text-yellow-500" />
+  
+{/* Electricity Department */}
+{/* Electricity Department */}
+<Card className="shadow-xl bg-blue-200 rounded-lg">
+  <CardContent className="p-4">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm text- blue-700">Electricity Department</p>
+        <p className="text-2xl font-bold text-blue-900">
+          {
+            issues.filter(
+              (issue) =>
+                issue.title.toLowerCase().includes("light") ||
+                issue.title.toLowerCase().includes("lamp") ||
+                issue.title.toLowerCase().includes("electric")
+            ).length
+          }
+        </p>
       </div>
-    </CardContent>
-  </Card>
+      <Shield className="w-8 h-8 text-purple-600" />
+    </div>
+  </CardContent>
+</Card>
+
+
+
 
   {/* Waste Department */}
-  <Card>
-    <CardContent className="p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">Waste Department</p>
-          <p className="text-2xl font-bold text-green-600">
-            {
-              issues.filter(
-                (issue) =>
-                  issue.title.toLowerCase().includes("garbage") ||
-                  issue.title.toLowerCase().includes("waste") ||
-                  issue.title.toLowerCase().includes("trash")
-              ).length
-            }
-          </p>
-        </div>
-        <Trash2 className="w-8 h-8 text-green-500" />
+<Card className="shadow-xl bg-blue-100 rounded-lg">
+  <CardContent className="p-4">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm text-blue-700">Waste Department</p>
+        <p className="text-2xl font-bold text-green-900">
+          {
+            issues.filter(
+              (issue) =>
+                issue.title.toLowerCase().includes("garbage") ||
+                issue.title.toLowerCase().includes("waste") ||
+                issue.title.toLowerCase().includes("trash")
+            ).length
+          }
+        </p>
       </div>
-    </CardContent>
-  </Card>
+      <Trash2 className="w-8 h-8 text-purple-600" />
+    </div>
+  </CardContent>
+</Card>
+
 
   {/* Roads Department */}
-  <Card>
-    <CardContent className="p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">Roads Department</p>
-          <p className="text-2xl font-bold text-blue-600">
-            {
-              issues.filter(
-                (issue) =>
-                  issue.title.toLowerCase().includes("road") ||
-                  issue.title.toLowerCase().includes("pothole") ||
-                  issue.title.toLowerCase().includes("street")
-              ).length
-            }
-          </p>
-        </div>
-        <MapPin className="w-8 h-8 text-blue-500" />
+<Card className="shadow-xl bg-blue-100 rounded-lg">
+  <CardContent className="p-4">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm text-blue-700">Roads Department</p>
+        <p className="text-2xl font-bold text-blue-900">
+          {
+            issues.filter(
+              (issue) =>
+                issue.title.toLowerCase().includes("road") ||
+                issue.title.toLowerCase().includes("pothole") ||
+                issue.title.toLowerCase().includes("street")
+            ).length
+          }
+        </p>
       </div>
-    </CardContent>
-  </Card>
+      <MapPin className="w-8 h-8 text-purple-600" />
+    </div>
+  </CardContent>
+</Card>
+
 </div>
 
         {/* Category Quick Access Section */}
-        <Card className="mb-8 shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-purple-600" />
-              Quick Access Categories
-            </CardTitle>
-            <CardDescription className="text-gray-600">
-              Click on any category to view related issues
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid sm:grid-cols-3 gap-6">
-                {[
-                    { 
-                        label: "Potholes", 
-                        desc: "Road issues", 
-                        img: "/pothole.webp", 
-                        bgClass: "bg-gradient-to-br from-gray-700 to-gray-900",
-                        icon: "🛣️",
-                        count: issues.filter(issue => 
-                            issue.title?.toLowerCase().includes("pothole") || 
-                            issue.title?.toLowerCase().includes("road") ||
-                            issue.title?.toLowerCase().includes("street")
-                        ).length
-                    },
-                    { 
-                        label: "Garbage", 
-                        desc: "Waste management", 
-                        img: "/garbage.png", 
-                        bgClass: "bg-gradient-to-br from-green-600 to-emerald-700",
-                        icon: "🗑️",
-                        count: issues.filter(issue => 
-                            issue.title?.toLowerCase().includes("garbage") || 
-                            issue.title?.toLowerCase().includes("waste") ||
-                            issue.title?.toLowerCase().includes("trash")
-                        ).length
-                    },
-                    { 
-                        label: "Streetlights", 
-                        desc: "Lighting issues", 
-                        img: "/streetlight.png", 
-                        bgClass: "bg-gradient-to-br from-yellow-500 to-orange-600",
-                        icon: "💡",
-                        count: issues.filter(issue => 
-                            issue.title?.toLowerCase().includes("light") || 
-                            issue.title?.toLowerCase().includes("streetlight") ||
-                            issue.title?.toLowerCase().includes("lamp")
-                        ).length
-                    },
-                ].map((item) => (
-                    <Button
-                        key={item.label}
-                        className={`h-36 relative overflow-hidden rounded-2xl text-white shadow-xl 
-                                    flex flex-col w-full transition-all duration-300 ease-in-out 
-                                    hover:scale-105 hover:shadow-2xl active:scale-95 ${item.bgClass}
-                                    group cursor-pointer`}
-                        onClick={() => openCategoryDialog(item.label)} 
-                    >
-                        {/* Background Pattern */}
-                        <div className="absolute inset-0 opacity-10">
-                            <div className="absolute top-2 right-2 text-4xl">{item.icon}</div>
-                        </div>
-                        
-                        {/* Content */}
-                        <div className="relative z-10 flex flex-col justify-between h-full p-6">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <h3 className="font-bold text-xl mb-1">{item.label}</h3>
-                                    <p className="text-sm opacity-90">{item.desc}</p>
-                                </div>
-                                <div className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
-                                    <span className="text-sm font-semibold">{item.count}</span>
-                                </div>
-                            </div>
-                            
-                            {/* Bottom section with image preview */}
-                            <div className="flex items-center justify-between mt-4">
-                                <div className="text-xs opacity-75">
-                                    Click to view issues
-                                </div>
-                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/20 backdrop-blur-sm">
-                                    <img 
-                                        src={item.img} 
-                                        alt={item.label}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                        
-                        {/* Hover effect overlay */}
-                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    </Button>
-                ))}
+        {/* Category Quick Access Section */}
+<Card className="mb-8 shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+  <CardHeader className="pb-4">
+    <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+      <MapPin className="w-5 h-5 text-purple-600" />
+      Quick Access Categories
+    </CardTitle>
+    <CardDescription className="text-gray-600">
+      Click on any category to view related issues
+    </CardDescription>
+  </CardHeader>
+  <CardContent>
+    <div className="grid sm:grid-cols-3 gap-6">
+      {[
+        { 
+          label: "Potholes", 
+          desc: "Road issues", 
+          img: "/pothole.webp", 
+          count: issues.filter(issue => 
+            issue.title?.toLowerCase().includes("pothole") || 
+            issue.title?.toLowerCase().includes("road") ||
+            issue.title?.toLowerCase().includes("street")
+          ).length
+        },
+        { 
+          label: "Garbage", 
+          desc: "Waste management", 
+          img: "/garbage.png", 
+          count: issues.filter(issue => 
+            issue.title?.toLowerCase().includes("garbage") || 
+            issue.title?.toLowerCase().includes("waste") ||
+            issue.title?.toLowerCase().includes("trash")
+          ).length
+        },
+        { 
+          label: "Streetlights", 
+          desc: "Lighting issues", 
+          img: "/streetlight.png", 
+          count: issues.filter(issue => 
+            issue.title?.toLowerCase().includes("light") || 
+            issue.title?.toLowerCase().includes("streetlight") ||
+            issue.title?.toLowerCase().includes("lamp")
+          ).length
+        },
+      ].map((item) => (
+        <Button
+          key={item.label}
+          className="h-36 relative overflow-hidden rounded-2xl text-white shadow-xl flex flex-col w-full transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-2xl active:scale-95 group cursor-pointer"
+          onClick={() => openCategoryDialog(item.label)}
+        >
+          {/* Background Image */}
+          <img
+            src={item.img}
+            alt={item.label}
+            className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-80"
+          />
+
+          {/* Overlay for readability */}
+          <div className="absolute inset-0 bg-black/30"></div>
+
+          {/* Content */}
+          <div className="relative z-10 flex flex-col justify-between h-full p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="font-bold text-xl mb-1">{item.label}</h3>
+                <p className="text-sm opacity-90">{item.desc}</p>
+              </div>
+              <div className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
+                <span className="text-sm font-semibold">{item.count}</span>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+            <div className="text-xs opacity-75 mt-4">Click to view issues</div>
+          </div>
 
+          {/* Hover effect overlay */}
+          <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        </Button>
+      ))}
+      <button
+        key="PredictiveMaintenance"
+        onClick={handlePredictiveClick}
+        // This is the key change: on small screens and up, start at column 2 and end at column 3, centering it in the 3-column grid space.
+       className="sm:col-start-2 sm:col-end-3 flex flex-col items-start p-6 rounded-xl text-left bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white shadow-xl transform transition-transform duration-200 hover:scale-[1.02]"
 
-
+    >
+        <TrendingUp className="w-10 h-10 mb-2 text-purple-200" />
+        <h3 className="text-2xl font-bold">Predictive Analytics</h3>
+        <p className="text-sm text-purple-100 mt-1">Hotspot Forecasting & Proactive Maintenance</p>
+    </button>
+    </div>
+  </CardContent>
+</Card>
 
 
         {/* Issue Management Section */}
-        <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+        <Card className="shadow-xl border-0 bg-blue-100/80 backdrop-blur-sm rounded-xl transition-all hover:shadow-2xl hover:scale-[1.02]">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-xl font-bold text-gray-800">Issue Management</CardTitle>
                 <CardDescription className="text-gray-600">Manage and assign civic issues to workers</CardDescription>
               </div>
-              <Button className="bg-purple-600 hover:bg-purple-700 text-white" onClick={handleViewMap}>
-                <MapPin className="w-4 h-4 mr-2" />
-                View Map
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  className="bg-blue-600 hover:bg-blue-700 text-white" 
+                  onClick={handleMakeProject}
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Make a Project
+                </Button>
+                <Button 
+                  className="bg-orange-600 hover:bg-orange-700 text-white" 
+                  onClick={handleConstructionList}
+                >
+                  <Building className="w-4 h-4 mr-2" />
+                  Construction List
+                </Button>
+                <Button className="bg-purple-600 hover:bg-purple-700 text-white" onClick={handleViewMap}>
+                  <MapPin className="w-4 h-4 mr-2" />
+                  View Map
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -1116,35 +1153,42 @@ const getFilteredIssuesByCategory = (category: string) => {
       <canvas ref={canvasRef} className="hidden" />
       <ChatbotButton userType="mcc" />
 
-      
-
-<Dialog open={isCategoryListOpen} onOpenChange={setIsCategoryListOpen}>
-    <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <Dialog open={isCategoryListOpen} onOpenChange={setIsCategoryListOpen}>
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-purple-700">
-                Active Reports: {selectedCategory}
+              Active Reports: {selectedCategory}
             </DialogTitle>
-            {/* ... other descriptive text ... */}
-        </DialogHeader>
+          </DialogHeader>
 
-        <div className="space-y-4 pt-4">
+          <div className="space-y-4 pt-4">
             {selectedCategory && (
-                <>
-                    {/* Maps over the filtered issues using getFilteredIssuesByCategory */}
-                    {getFilteredIssuesByCategory(selectedCategory).map((issue) => (
-                        <div key={issue.id} className="flex items-center justify-between p-4 border rounded-lg">
-                            {/* ... Issue details (Title, Ticket ID, Location, Status) ... */}
-                            <Button onClick={() => handleViewDetails(issue)}>
-                                View Details
-                            </Button>
-                        </div>
-                    ))}
-                    {/* ... Empty state message ... */}
-                </>
+              <>
+                {getFilteredIssuesByCategory(selectedCategory).map((issue) => (
+                  <div key={issue.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <h3 className="font-semibold">{issue.title}</h3>
+                      <p className="text-sm text-gray-600">Location: {issue.location}</p>
+                      <div className="flex gap-2 mt-2">
+                        <Badge className={getStatusColor(issue.status)}>{issue.status}</Badge>
+                        <Badge className={getPriorityColor(issue.priority)}>{issue.priority}</Badge>
+                      </div>
+                    </div>
+                    <Button onClick={() => handleViewDetails(issue)}>
+                      View Details
+                    </Button>
+                  </div>
+                ))}
+                {getFilteredIssuesByCategory(selectedCategory).length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No issues found for {selectedCategory}</p>
+                  </div>
+                )}
+              </>
             )}
-        </div>
-    </DialogContent>
-</Dialog>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
