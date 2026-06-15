@@ -200,11 +200,7 @@ Note: This is an official communication from Mangalore City Corporation. Any del
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
     link.setAttribute('href', url)
-<<<<<<< HEAD
-    link.setAttribute('download',`MCC_Complaint_${company.name.replace(/\s+/g, '_')}_${project.region.replace(/\s+/g, '_')}_${new Date().getTime()}.csv`)
-=======
     link.setAttribute('download', `MCC_Complaint_${company.name.replace(/\s+/g, '_')}_${project.region.replace(/\s+/g, '_')}_${new Date().getTime()}.csv`)
->>>>>>> a23438daf5284144bdbec04b606772f9c9ab57b8
     link.style.visibility = 'hidden'
     document.body.appendChild(link)
     link.click()

@@ -51,7 +51,7 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
     setTimeout(() => {
       setLoading(false)
       setStep("otp")
-    }, 1500)
+    }, 200)
   }
 
   const handleVerifyOTP = () => {
@@ -65,7 +65,7 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
         onClose()
         router.push(userType === "citizen" ? "/citizen/dashboard" : "/mcc/dashboard")
       }
-    }, 1500)
+    }, 200)
   }
 
   // MCC staff credentials
@@ -80,7 +80,7 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
         onClose()
         router.push("/mcc/dashboard")
       }
-    }, 1200)
+    }, 200)
   }
 
   const handleCompleteSignup = () => {
@@ -90,7 +90,7 @@ export default function LoginModal({ isOpen, onClose, userType }: LoginModalProp
       setLoading(false)
       onClose()
       router.push(userType === "citizen" ? "/citizen/dashboard" : "/mcc/dashboard")
-    }, 1500)
+    }, 200)
   }
 
   const resetModal = () => {

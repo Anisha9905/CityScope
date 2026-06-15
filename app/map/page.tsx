@@ -52,17 +52,49 @@ export default function CitizenDashboard() {
     { id: 3, title: "Water Supply Disruption Notice", time: "1 day ago" }
   ])
 
-  const [issues, setIssues] = useState<Issue[]>(() => {
-    if (typeof window !== "undefined") {
-      const savedIssues = localStorage.getItem("citizenIssues")
-      if (savedIssues) return JSON.parse(savedIssues)
+  const [dbConnected, setDbConnected] = useState<boolean | null>(null)
+  const [issues, setIssues] = useState<Issue[]>([])
+
+  useEffect(() => {
+    async function checkConnection() {
+      try {
+        const res = await fetch("/api/health")
+        const data = await res.json()
+        setDbConnected(data.status === "connected")
+      } catch {
+        setDbConnected(false)
+      }
     }
-    return [
-      { id: 1, title: "Pothole on Car Street", status: "In Progress", date: "2024-01-15" },
-      { id: 2, title: "Street Light Not Working", status: "Resolved", date: "2024-01-12" },
-      { id: 3, title: "Garbage Collection Delay", status: "Pending", date: "2024-01-10" }
-    ]
-  })
+    checkConnection()
+  }, [])
+
+  // Load issues from MongoDB API with fallback
+  useEffect(() => {
+    async function fetchIssues() {
+      try {
+        const res = await fetch("/api/issues")
+        if (res.ok) {
+          const data = await res.json()
+          setIssues(data)
+        }
+      } catch (err) {
+        console.error("Failed to fetch issues from database:", err)
+        const saved = localStorage.getItem("citizenIssues")
+        if (saved) {
+          setIssues(JSON.parse(saved))
+        } else {
+          setIssues([
+            { id: 1, title: "Pothole on Car Street", status: "In Progress", date: "2024-01-15" },
+            { id: 2, title: "Street Light Not Working", status: "Resolved", date: "2024-01-12" },
+            { id: 3, title: "Garbage Collection Delay", status: "Pending", date: "2024-01-10" },
+          ])
+        }
+      }
+    }
+    fetchIssues()
+    const interval = setInterval(fetchIssues, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
   const handleLogout = () => router.push("/")
 
@@ -76,7 +108,7 @@ export default function CitizenDashboard() {
   useEffect(() => {
     async function fetchWeather() {
       try {
-        const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY
+        const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY || "6244b6aa16bc4ac20725f1f5d04fd885"
         const city = "Mangalore"
         const res = await fetch(
           `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`
@@ -123,6 +155,16 @@ export default function CitizenDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {dbConnected === true && (
+              <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                🟢 DB Connected
+              </Badge>
+            )}
+            {dbConnected === false && (
+              <Badge variant="destructive">
+                🔴 DB Disconnected
+              </Badge>
+            )}
             <NotificationBell userType="citizen" />
             <Avatar
               className="w-8 h-8 cursor-pointer hover:ring-2 hover:ring-blue-300 transition-all"

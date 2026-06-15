@@ -51,6 +51,9 @@ export default function MCCDashboard() {
     inProgress: 0,
     resolved: 0,
   })
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [priorityFilter, setPriorityFilter] = useState("all")
   const [selectedIssue, setSelectedIssue] = useState<any>(null)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [showUpdateModal, setShowUpdateModal] = useState(false)
@@ -70,6 +73,21 @@ export default function MCCDashboard() {
   // Filter for quick-type cards
 const [issueFilter, setIssueFilter] = useState<string>("")
 const [activeFilter, setActiveFilter] = useState<string>("")
+
+  const [dbConnected, setDbConnected] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    async function checkConnection() {
+      try {
+        const res = await fetch("/api/health")
+        const data = await res.json()
+        setDbConnected(data.status === "connected")
+      } catch {
+        setDbConnected(false)
+      }
+    }
+    checkConnection()
+  }, [])
 
 const handleFilterByKeyword = (keyword: string) => {
   setIssueFilter(keyword.toLowerCase())
@@ -163,91 +181,152 @@ const clearIssueFilter = () => {
     setShowAssignModal(true)
   }
 
-  const handleConfirmAssignment = () => {
+  const handleConfirmAssignment = async () => {
     if (!selectedWorker) {
       alert("Please select a worker team")
       return
     }
 
-    setIssues((prev) =>
-      prev.map((issue) =>
-        issue.id === selectedIssue.id ? { ...issue, assignedTo: selectedWorker, status: "In Progress" } : issue,
-      ),
-    )
+    try {
+      const res = await fetch(`/api/issues/${selectedIssue.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assignedTo: selectedWorker,
+          status: "In Progress"
+        })
+      })
 
-    const citizenNotification = {
-      id: Date.now(),
-      type: "assignment",
-      title: "Worker Assigned to Your Issue",
-      message: `Your issue "${selectedIssue.title}" has been assigned to ${selectedWorker}. Work will begin soon.`,
-      timestamp: new Date().toISOString(),
-      issueId: selectedIssue.id,
-      read: false,
-    }
+      if (!res.ok) throw new Error("Failed to assign worker in DB")
 
-    const existingNotifications = JSON.parse(localStorage.getItem("citizenNotifications") || "[]")
-    existingNotifications.push(citizenNotification)
-    localStorage.setItem("citizenNotifications", JSON.stringify(existingNotifications))
+      await fetch("/api/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "assignment",
+          title: "Worker Assigned to Your Issue",
+          message: `Your issue "${selectedIssue.title}" has been assigned to ${selectedWorker}. Work will begin soon.`,
+          issueId: selectedIssue.id,
+          userType: "citizen"
+        })
+      })
 
-    const citizenIssues = JSON.parse(localStorage.getItem("citizenIssues") || "[]")
-    const updatedCitizenIssues = citizenIssues.map((issue: any) =>
-      issue.id === selectedIssue.id ? { ...issue, assignedTo: selectedWorker, status: "In Progress" } : issue,
-    )
-    localStorage.setItem("citizenIssues", JSON.stringify(updatedCitizenIssues))
-
-    alert(`Issue assigned to ${selectedWorker}! Worker team and citizen have been notified.`)
-    setShowAssignModal(false)
-    setSelectedIssue(null)
-    setSelectedWorker("")
-  }
-
-  const handleCompleteIssue = () => {
-    if (selectedIssue && completionPhotos.length > 0) {
       setIssues((prev) =>
         prev.map((issue) =>
-          issue.id === selectedIssue.id
-            ? {
-                ...issue,
-                completionPhotos: completionPhotos,
-                status: "Resolved",
-                completionNotes: completionNotes,
-                completedDate: new Date().toLocaleDateString(),
-              }
-            : issue,
+          issue.id === selectedIssue.id ? { ...issue, assignedTo: selectedWorker, status: "In Progress" } : issue,
         ),
       )
 
+      alert(`Issue assigned to ${selectedWorker}! Worker team and citizen have been notified.`)
+    } catch (err) {
+      console.error(err)
+      alert("Failed to assign worker in DB. Falling back to local storage update.")
+      
       const citizenNotification = {
         id: Date.now(),
-        type: "completion",
-        title: "Issue Resolved!",
-        message: `Your issue "${selectedIssue.title}" has been resolved. Check the completion photos and details.`,
+        type: "assignment",
+        title: "Worker Assigned to Your Issue",
+        message: `Your issue "${selectedIssue.title}" has been assigned to ${selectedWorker}. Work will begin soon.`,
         timestamp: new Date().toISOString(),
         issueId: selectedIssue.id,
-        completionPhotos: completionPhotos,
-        completionNotes: completionNotes,
         read: false,
       }
-
       const existingNotifications = JSON.parse(localStorage.getItem("citizenNotifications") || "[]")
       existingNotifications.push(citizenNotification)
       localStorage.setItem("citizenNotifications", JSON.stringify(existingNotifications))
 
       const citizenIssues = JSON.parse(localStorage.getItem("citizenIssues") || "[]")
       const updatedCitizenIssues = citizenIssues.map((issue: any) =>
-        issue.id === selectedIssue.id
-          ? {
-              ...issue,
-              status: "Resolved",
-              completionPhotos: completionPhotos,
-              completionNotes: completionNotes,
-              completedDate: new Date().toLocaleDateString(),
-            }
-          : issue,
+        issue.id === selectedIssue.id ? { ...issue, assignedTo: selectedWorker, status: "In Progress" } : issue,
       )
       localStorage.setItem("citizenIssues", JSON.stringify(updatedCitizenIssues))
+    }
 
-      alert("Issue marked as completed! Citizen has been notified with completion photos.")
+    setShowAssignModal(false)
+    setSelectedIssue(null)
+    setSelectedWorker("")
+  }
+
+  const handleCompleteIssue = async () => {
+    if (selectedIssue && completionPhotos.length > 0) {
+      try {
+        const res = await fetch(`/api/issues/${selectedIssue.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            completionPhotos: completionPhotos,
+            status: "Resolved",
+            completionNotes: completionNotes,
+            completedDate: new Date().toLocaleDateString()
+          })
+        })
+
+        if (!res.ok) throw new Error("Failed to complete issue in DB")
+
+        await fetch("/api/notifications", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "completion",
+            title: "Issue Resolved!",
+            message: `Your issue "${selectedIssue.title}" has been resolved. Check the completion photos and details.`,
+            issueId: selectedIssue.id,
+            userType: "citizen",
+            completionPhotos: completionPhotos,
+            completionNotes: completionNotes
+          })
+        })
+
+        setIssues((prev) =>
+          prev.map((issue) =>
+            issue.id === selectedIssue.id
+              ? {
+                  ...issue,
+                  completionPhotos: completionPhotos,
+                  status: "Resolved",
+                  completionNotes: completionNotes,
+                  completedDate: new Date().toLocaleDateString(),
+                }
+              : issue,
+          ),
+        )
+
+        alert("Issue marked as completed! Citizen has been notified with completion photos.")
+      } catch (err) {
+        console.error(err)
+        alert("Failed to complete issue in DB. Falling back to local storage update.")
+
+        const citizenNotification = {
+          id: Date.now(),
+          type: "completion",
+          title: "Issue Resolved!",
+          message: `Your issue "${selectedIssue.title}" has been resolved. Check the completion photos and details.`,
+          timestamp: new Date().toISOString(),
+          issueId: selectedIssue.id,
+          completionPhotos: completionPhotos,
+          completionNotes: completionNotes,
+          read: false,
+        }
+
+        const existingNotifications = JSON.parse(localStorage.getItem("citizenNotifications") || "[]")
+        existingNotifications.push(citizenNotification)
+        localStorage.setItem("citizenNotifications", JSON.stringify(existingNotifications))
+
+        const citizenIssues = JSON.parse(localStorage.getItem("citizenIssues") || "[]")
+        const updatedCitizenIssues = citizenIssues.map((issue: any) =>
+          issue.id === selectedIssue.id
+            ? {
+                ...issue,
+                status: "Resolved",
+                completionPhotos: completionPhotos,
+                completionNotes: completionNotes,
+                completedDate: new Date().toLocaleDateString(),
+              }
+            : issue,
+        )
+        localStorage.setItem("citizenIssues", JSON.stringify(updatedCitizenIssues))
+      }
+
       setShowCompletionModal(false)
       setCompletionPhotos([])
       setCompletionNotes("")
@@ -264,16 +343,8 @@ const clearIssueFilter = () => {
     router.push("/mcc/map")
   }
 
-  const handleConstructionList = () => {
-    router.push("/mcc/construction_companies")
-  }
   const handleMakeProject = () => {
     router.push("/mcc/project_report")
-  }
-  }
-
-  const handleConstructionList = () => {
-    router.push("/mcc/construction_companies")
   }
 
   const getStatusColor = (status: string) => {
@@ -307,86 +378,120 @@ const clearIssueFilter = () => {
     setNewIssueNotifications([])
   }
 
-  const loadAndSyncIssues = () => {
-    const citizenIssues = JSON.parse(localStorage.getItem("citizenIssues") || "[]")
-    const lastCheckedTime = localStorage.getItem("mccLastChecked") || "0"
-    const currentTime = Date.now().toString()
+  const loadAndSyncIssues = async () => {
+    try {
+      const res = await fetch("/api/issues")
+      if (!res.ok) throw new Error("Failed to fetch")
+      const dbIssues = await res.json()
 
-    console.log("[v0] Loading citizen issues from localStorage:", citizenIssues.length)
-    console.log("[v0] Last checked time:", lastCheckedTime)
+      const lastCheckedTime = localStorage.getItem("mccLastChecked") || "0"
+      const currentTime = Date.now().toString()
 
-    const newIssues = citizenIssues.filter((issue: any) => {
-      const issueTimestamp = issue.id || 0
-      const lastChecked = Number.parseInt(lastCheckedTime)
-      console.log(`[v0] Checking issue ${issue.title}: timestamp=${issueTimestamp}, lastChecked=${lastChecked}`)
-      return issueTimestamp > lastChecked
-    })
-
-    console.log("[v0] New issues found:", newIssues.length)
-
-    if (newIssues.length > 0) {
-      console.log("[v0] Found new issues:", newIssues.length)
-      console.log(
-        "[v0] New issues details:",
-        newIssues.map((issue: { id: any; title: any }) => ({ id: issue.id, title: issue.title })),
-        newIssues.map((issue: { id: any; title: any }) => ({ id: issue.id, title: issue.title })),
-      )
-      setNewIssueNotifications(newIssues)
-      setShowNewIssueAlert(true)
-
-      newIssues.forEach((issue: any) => {
-        console.log(`[v0] New issue reported: ${issue.title} by ${issue.reportedBy}`)
+      const newIssues = dbIssues.filter((issue: any) => {
+        const issueTimestamp = Number(issue.id) || 0
+        const lastChecked = Number.parseInt(lastCheckedTime)
+        return issueTimestamp > lastChecked
       })
-    } else {
-      console.log("[v0] No new issues found")
+
+      if (newIssues.length > 0) {
+        setNewIssueNotifications(newIssues)
+        setShowNewIssueAlert(true)
+      }
+
+      const defaultIssues = [
+        {
+          id: 999,
+          title: "Street Light Not Working",
+          status: "In Progress",
+          priority: "Medium",
+          location: "MG Road, Mangalore",
+          reportedBy: "Citizen #5678",
+          date: "2024-01-14",
+          assignedTo: "Worker Team A",
+          description: "Street light has been out for 3 days, causing safety concerns",
+          photos: ["/broken-street-light.png"],
+        },
+      ]
+
+      const allIssues = [...dbIssues, ...defaultIssues]
+      setIssues(allIssues)
+
+      const totalIssues = allIssues.length
+      const pendingIssues = allIssues.filter((issue) => issue.status === "Pending").length
+      const inProgress = allIssues.filter((issue) => issue.status === "In Progress").length
+      const resolved = allIssues.filter((issue) => issue.status === "Resolved").length
+
+      setStats({
+        totalIssues,
+        pendingIssues,
+        inProgress,
+        resolved,
+      })
+
+      localStorage.setItem("mccLastChecked", currentTime)
+    } catch (error) {
+      console.error("[v0] Error fetching database issues, falling back to local storage:", error)
+      const citizenIssues = JSON.parse(localStorage.getItem("citizenIssues") || "[]")
+      const lastCheckedTime = localStorage.getItem("mccLastChecked") || "0"
+      const currentTime = Date.now().toString()
+
+      const newIssues = citizenIssues.filter((issue: any) => {
+        const issueTimestamp = issue.id || 0
+        const lastChecked = Number.parseInt(lastCheckedTime)
+        return issueTimestamp > lastChecked
+      })
+
+      if (newIssues.length > 0) {
+        setNewIssueNotifications(newIssues)
+        setShowNewIssueAlert(true)
+      }
+
+      const mccFormattedIssues = citizenIssues.map((issue: any, index: number) => ({
+        id: issue.id || Date.now() + index,
+        title: issue.title,
+        status: issue.status || "Pending",
+        priority: issue.priority || "Medium",
+        location: issue.location || "Unknown Location",
+        reportedBy: issue.reportedBy || "Citizen",
+        date: issue.date || new Date().toLocaleDateString(),
+        assignedTo: issue.assignedTo || "Unassigned",
+        description: issue.description || "",
+        photos: issue.photos || [],
+        completionPhotos: issue.completionPhotos || [],
+      }))
+
+      const defaultIssues = [
+        {
+          id: 999,
+          title: "Street Light Not Working",
+          status: "In Progress",
+          priority: "Medium",
+          location: "MG Road, Mangalore",
+          reportedBy: "Citizen #5678",
+          date: "2024-01-14",
+          assignedTo: "Worker Team A",
+          description: "Street light has been out for 3 days, causing safety concerns",
+          photos: ["/broken-street-light.png"],
+        },
+      ]
+
+      const allIssues = [...mccFormattedIssues, ...defaultIssues]
+      setIssues(allIssues)
+
+      const totalIssues = allIssues.length
+      const pendingIssues = allIssues.filter((issue) => issue.status === "Pending").length
+      const inProgress = allIssues.filter((issue) => issue.status === "In Progress").length
+      const resolved = allIssues.filter((issue) => issue.status === "Resolved").length
+
+      setStats({
+        totalIssues,
+        pendingIssues,
+        inProgress,
+        resolved,
+      })
+
+      localStorage.setItem("mccLastChecked", currentTime)
     }
-
-    const mccFormattedIssues = citizenIssues.map((issue: any, index: number) => ({
-      id: issue.id || Date.now() + index,
-      title: issue.title,
-      status: issue.status || "Pending",
-      priority: issue.priority,
-      location: issue.location,
-      reportedBy: issue.reportedBy,
-      date: issue.date,
-      assignedTo: issue.assignedTo || "Unassigned",
-      description: issue.description,
-      photos: issue.photos || [],
-      completionPhotos: issue.completionPhotos || [],
-    }))
-
-    const defaultIssues = [
-      {
-        id: 999,
-        title: "Street Light Not Working",
-        status: "In Progress",
-        priority: "Medium",
-        location: "MG Road, Mangalore",
-        reportedBy: "Citizen #5678",
-        date: "2024-01-14",
-        assignedTo: "Worker Team A",
-        description: "Street light has been out for 3 days, causing safety concerns",
-        photos: ["/broken-street-light.png"],
-      },
-    ]
-
-    const allIssues = [...mccFormattedIssues, ...defaultIssues]
-    console.log("[v0] Total issues loaded:", allIssues.length)
-    setIssues(allIssues)
-
-    const totalIssues = allIssues.length
-    const pendingIssues = allIssues.filter((issue) => issue.status === "Pending").length
-    const inProgress = allIssues.filter((issue) => issue.status === "In Progress").length
-    const resolved = allIssues.filter((issue) => issue.status === "Resolved").length
-
-    setStats({
-      totalIssues,
-      pendingIssues,
-      inProgress,
-      resolved,
-    })
-
-    localStorage.setItem("mccLastChecked", currentTime)
   }
 
   useEffect(() => {
@@ -516,6 +621,16 @@ const getFilteredIssuesByCategory = (category: string) => {
             </div>
 
             <div className="flex items-center gap-3">
+              {dbConnected === true && (
+                <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                  🟢 DB Connected
+                </Badge>
+              )}
+              {dbConnected === false && (
+                <Badge variant="destructive">
+                  🔴 DB Disconnected
+                </Badge>
+              )}
               <NotificationBell userType="mcc" />
               <Avatar
                 className="w-8 h-8 cursor-pointer hover:ring-2 hover:ring-purple-300 transition-all"
@@ -759,103 +874,7 @@ const getFilteredIssuesByCategory = (category: string) => {
   </CardContent>
 </Card>
 
-        <Card className="mb-8 shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-purple-600" />
-              Quick Access Categories
-            </CardTitle>
-            <CardDescription className="text-gray-600">
-              Click on any category to view related issues
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid sm:grid-cols-3 gap-6">
-                {[
-                    { 
-                        label: "Potholes", 
-                        desc: "Road issues", 
-                        img: "/pothole.webp", 
-                        bgClass: "bg-gradient-to-br from-gray-700 to-gray-900",
-                        icon: "🛣️",
-                        count: issues.filter(issue => 
-                            issue.title?.toLowerCase().includes("pothole") || 
-                            issue.title?.toLowerCase().includes("road") ||
-                            issue.title?.toLowerCase().includes("street")
-                        ).length
-                    },
-                    { 
-                        label: "Garbage", 
-                        desc: "Waste management", 
-                        img: "/garbage.png", 
-                        bgClass: "bg-gradient-to-br from-green-600 to-emerald-700",
-                        icon: "🗑️",
-                        count: issues.filter(issue => 
-                            issue.title?.toLowerCase().includes("garbage") || 
-                            issue.title?.toLowerCase().includes("waste") ||
-                            issue.title?.toLowerCase().includes("trash")
-                        ).length
-                    },
-                    { 
-                        label: "Streetlights", 
-                        desc: "Lighting issues", 
-                        img: "/streetlight.png", 
-                        bgClass: "bg-gradient-to-br from-yellow-500 to-orange-600",
-                        icon: "💡",
-                        count: issues.filter(issue => 
-                            issue.title?.toLowerCase().includes("light") || 
-                            issue.title?.toLowerCase().includes("streetlight") ||
-                            issue.title?.toLowerCase().includes("lamp")
-                        ).length
-                    },
-                ].map((item) => (
-                    <Button
-                        key={item.label}
-                        className={`h-36 relative overflow-hidden rounded-2xl text-white shadow-xl 
-                                    flex flex-col w-full transition-all duration-300 ease-in-out 
-                                    hover:scale-105 hover:shadow-2xl active:scale-95 ${item.bgClass}
-                                    group cursor-pointer`}
-                        onClick={() => openCategoryDialog(item.label)} 
-                    >
-                        {/* Background Pattern */}
-                        <div className="absolute inset-0 opacity-10">
-                            <div className="absolute top-2 right-2 text-4xl">{item.icon}</div>
-                        </div>
-                        
-                        {/* Content */}
-                        <div className="relative z-10 flex flex-col justify-between h-full p-6">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <h3 className="font-bold text-xl mb-1">{item.label}</h3>
-                                    <p className="text-sm opacity-90">{item.desc}</p>
-                                </div>
-                                <div className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
-                                    <span className="text-sm font-semibold">{item.count}</span>
-                                </div>
-                            </div>
-                            
-                            {/* Bottom section with image preview */}
-                            <div className="flex items-center justify-between mt-4">
-                                <div className="text-xs opacity-75">
-                                    Click to view issues
-                                </div>
-                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/20 backdrop-blur-sm">
-                                    <img 
-                                        src={item.img} 
-                                        alt={item.label}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                        
-                        {/* Hover effect overlay */}
-                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    </Button>
-                ))}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Removed duplicate Categories Card */}
 
         {/* Issue Management Section */}
         <Card className="shadow-xl border-0 bg-blue-100/80 backdrop-blur-sm rounded-xl transition-all hover:shadow-2xl hover:scale-[1.02]">
@@ -875,20 +894,7 @@ const getFilteredIssuesByCategory = (category: string) => {
                 </Button>
                 <Button 
                   className="bg-orange-600 hover:bg-orange-700 text-white" 
-                  onClick={handleConstructionList}
-                >
-                  <Building className="w-4 h-4 mr-2" />
-                  Construction List
-                </Button>
-                <Button className="bg-purple-600 hover:bg-purple-700 text-white" onClick={handleViewMap}>
-                  <MapPin className="w-4 h-4 mr-2" />
-                  View Map
-                </Button>
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  className="bg-orange-600 hover:bg-orange-700 text-white" 
-                  onClick={handleConstructionList}
+                  onClick={() => router.push("/mcc/construction_companies")}
                 >
                   <Building className="w-4 h-4 mr-2" />
                   Construction List
@@ -903,20 +909,25 @@ const getFilteredIssuesByCategory = (category: string) => {
           <CardContent>
             <div className="flex gap-4 mb-6">
               <div className="flex-1">
-                <Input placeholder="Search issues..." className="max-w-sm" />
+                <Input 
+                  placeholder="Search issues..." 
+                  className="max-w-sm" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
-              <Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="progress">In Progress</SelectItem>
-                  <SelectItem value="resolved">Resolved</SelectItem>
+                  <SelectItem value="In Progress">In Progress</SelectItem>
+                  <SelectItem value="Resolved">Resolved</SelectItem>
                 </SelectContent>
               </Select>
-              <Select>
+              <Select value={priorityFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="Priority" />
                 </SelectTrigger>
@@ -930,13 +941,39 @@ const getFilteredIssuesByCategory = (category: string) => {
             </div>
 
             <div className="space-y-4">
-              {issues.length === 0 ? (
+              {issues.filter((issue) => {
+                const matchesSearch = searchQuery
+                  ? `${issue.title || ""} ${issue.description || ""} ${issue.location || ""}`
+                      .toLowerCase()
+                      .includes(searchQuery.toLowerCase())
+                  : true
+                const matchesStatus = statusFilter && statusFilter !== "all"
+                  ? issue.status?.toLowerCase() === statusFilter.toLowerCase()
+                  : true
+                const matchesPriority = priorityFilter && priorityFilter !== "all"
+                  ? issue.priority?.toLowerCase() === priorityFilter.toLowerCase()
+                  : true
+                return matchesSearch && matchesStatus && matchesPriority
+              }).length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <AlertTriangle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No issues reported yet</p>
+                  <p>No matching issues found</p>
                 </div>
               ) : (
-                issues.map((issue) => (
+                issues.filter((issue) => {
+                  const matchesSearch = searchQuery
+                    ? `${issue.title || ""} ${issue.description || ""} ${issue.location || ""}`
+                        .toLowerCase()
+                        .includes(searchQuery.toLowerCase())
+                    : true
+                  const matchesStatus = statusFilter && statusFilter !== "all"
+                    ? issue.status?.toLowerCase() === statusFilter.toLowerCase()
+                    : true
+                  const matchesPriority = priorityFilter && priorityFilter !== "all"
+                    ? issue.priority?.toLowerCase() === priorityFilter.toLowerCase()
+                    : true
+                  return matchesSearch && matchesStatus && matchesPriority
+                }).map((issue) => (
                   <div key={issue.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
@@ -1272,35 +1309,41 @@ const getFilteredIssuesByCategory = (category: string) => {
       <Dialog open={isCategoryListOpen} onOpenChange={setIsCategoryListOpen}>
         <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-      <Dialog open={isCategoryListOpen} onOpenChange={setIsCategoryListOpen}>
-        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-purple-700">
-              Active Reports: {selectedCategory}
               Active Reports: {selectedCategory}
             </DialogTitle>
           </DialogHeader>
-          </DialogHeader>
 
           <div className="space-y-4 pt-4">
-          <div className="space-y-4 pt-4">
             {selectedCategory && (
-                <>
-                    {/* Maps over the filtered issues using getFilteredIssuesByCategory */}
-                    {getFilteredIssuesByCategory(selectedCategory).map((issue) => (
-                        <div key={issue.id} className="flex items-center justify-between p-4 border rounded-lg">
-                            {/* ... Issue details (Title, Ticket ID, Location, Status) ... */}
-                            <Button onClick={() => handleViewDetails(issue)}>
-                                View Details
-                            </Button>
+              <>
+                {getFilteredIssuesByCategory(selectedCategory).length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No issues reported in this category.</p>
+                ) : (
+                  getFilteredIssuesByCategory(selectedCategory).map((issue) => (
+                    <div key={issue.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                      <div>
+                        <h4 className="font-semibold text-lg">{issue.title}</h4>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                          <MapPin className="w-4 h-4" /> {issue.location}
+                        </p>
+                        <div className="flex gap-2 mt-2">
+                          <Badge className={getPriorityColor(issue.priority)}>{issue.priority}</Badge>
+                          <Badge className={getStatusColor(issue.status)}>{issue.status}</Badge>
                         </div>
-                    ))}
-                    {/* ... Empty state message ... */}
-                </>
+                      </div>
+                      <Button onClick={() => handleViewDetails(issue)} variant="outline" size="sm">
+                        <Eye className="w-4 h-4 mr-1" />
+                        View Details
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </>
             )}
-        </div>
-    </DialogContent>
-</Dialog>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

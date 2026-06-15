@@ -408,6 +408,27 @@ export default function PredictiveDashboard() {
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* --- AI Image Classifier Streamlit Link --- */}
+                <Card className="shadow-2xl mt-8 bg-gradient-to-r from-purple-700 to-indigo-800 text-white transform hover:scale-[1.01] transition-transform duration-300">
+                    <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-4 text-center sm:text-left">
+                            <Gauge className="w-8 h-8 text-purple-200 min-w-8" />
+                            <div>
+                                <h2 className="text-xl sm:text-2xl font-bold">Launch AI Civic Classifier Web App</h2>
+                                <p className="text-purple-100 mt-1">
+                                    Upload issue photos to automatically classify category, priority, and assign the correct department using YOLOv8.
+                                </p>
+                            </div>
+                        </div>
+                        <Button 
+                            onClick={() => window.open('http://localhost:8501', '_blank')} 
+                            className="bg-white text-purple-700 hover:bg-gray-100 font-bold px-6 py-3 rounded-lg shadow-lg border-0"
+                        >
+                            Open ML Web App
+                        </Button>
+                    </CardContent>
+                </Card>
             </div>
 
         </div>

@@ -1,33 +1,60 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Plus, ArrowLeft, Camera, Upload, Crosshair } from "lucide-react"
+import { Plus, ArrowLeft, Camera, Upload, Crosshair, Cloud } from "lucide-react"
 import { useRouter } from "next/navigation"
 
-interface Issue {
-  id: number
-  title: string
-  description: string
-  detailedDescription: string
-  photos?: string[]
-  location: string
-  gps: { lat: number; lng: number }
+interface MangaloreMapProps {
+  category?: string
+  userType?: "citizen" | "mcc"
+  onClose?: () => void
+  onIssueSubmitted?: (issue: any) => void
 }
 
-export default function MangaloreMap() {
+export default function MangaloreMap({ category, userType = "citizen", onClose, onIssueSubmitted }: MangaloreMapProps) {
   const [showReportForm, setShowReportForm] = useState(false)
   const [location, setLocation] = useState("MG Road, Mangalore - 575001")
   const [gps, setGps] = useState<{ lat: number; lng: number }>({ lat: 12.8731, lng: 74.843 })
+  const [weather, setWeather] = useState({
+    temp: "...",
+    condition: "...",
+    humidity: "...",
+    windSpeed: "..."
+  })
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     detailedDescription: "",
   })
+
+  useEffect(() => {
+    async function fetchWeather() {
+      try {
+        const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY || "6244b6aa16bc4ac20725f1f5d04fd885"
+        const city = "Mangalore"
+        const res = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`
+        )
+        const data = await res.json()
+        if (data && data.main) {
+          setWeather({
+            temp: `${Math.round(data.main.temp)}°C`,
+            condition: data.weather?.[0]?.main || "...",
+            humidity: `${data.main.humidity}%`,
+            windSpeed: `${data.wind?.speed ?? "..."} m/s`
+          })
+        }
+      } catch (err) {
+        console.error("Error fetching weather for map report:", err)
+      }
+    }
+    fetchWeather()
+  }, [])
   const [photos, setPhotos] = useState<string[]>([])
   const [showCamera, setShowCamera] = useState(false)
 
@@ -114,22 +141,45 @@ export default function MangaloreMap() {
   }
 
   // Submit report
-  const handleReportSubmit = () => {
+  const handleReportSubmit = async () => {
     if (!formData.title || !formData.detailedDescription)
       return alert("Please fill all required fields")
 
-    const newIssue: Issue = {
+    const newIssue = {
       id: Date.now(),
-      title: formData.title,
-      description: formData.description,
-      detailedDescription: formData.detailedDescription,
+      title: category ? `${category}: ${formData.title}` : formData.title,
+      description: formData.detailedDescription,
+      status: "Pending",
+      priority: "Medium",
       photos,
       location,
-      gps,
+      gps: `${gps.lat.toFixed(6)}, ${gps.lng.toFixed(6)}`,
+      reportedBy: userType === "mcc" ? "MCC Officer Manjunath" : "Citizen Priya Shetty",
+      date: new Date().toLocaleDateString("en-GB"),
+      weather: `${weather.temp} ${weather.condition}`
     }
 
-    console.log("Submitted Issue:", newIssue)
-    alert("Issue submitted successfully!")
+    try {
+      const res = await fetch("/api/issues", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newIssue)
+      })
+
+      if (!res.ok) throw new Error("Failed to report issue")
+
+      alert("Issue submitted successfully to the database!")
+      onIssueSubmitted?.(newIssue)
+    } catch (err) {
+      console.error(err)
+      alert("Failed to save to database. Saving locally.")
+      
+      const savedIssues = JSON.parse(localStorage.getItem("citizenIssues") || "[]")
+      savedIssues.push(newIssue)
+      localStorage.setItem("citizenIssues", JSON.stringify(savedIssues))
+      
+      onIssueSubmitted?.(newIssue)
+    }
 
     // Reset form
     setFormData({ title: "", description: "", detailedDescription: "" })
@@ -188,9 +238,24 @@ export default function MangaloreMap() {
           {/* Location */}
           <div className="mb-4">
             <Label>Location</Label>
-            <Input value={location} readOnly className="mb-2" />
+            <Input value={location} onChange={(e) => setLocation(e.target.value)} className="mb-2" />
             <div className="text-sm text-gray-600">
               GPS: {gps.lat.toFixed(6)}, {gps.lng.toFixed(6)}
+            </div>
+          </div>
+
+          {/* Weather Details (Real-time) */}
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Cloud className="w-5 h-5 text-blue-500 animate-pulse" />
+              <div>
+                <div className="text-xs text-blue-600 font-semibold">Real-time Weather</div>
+                <div className="text-sm font-bold text-blue-900">{weather.temp} - {weather.condition}</div>
+              </div>
+            </div>
+            <div className="text-xs text-blue-700 text-right">
+              <div>Humidity: {weather.humidity}</div>
+              <div>Wind: {weather.windSpeed}</div>
             </div>
           </div>
 

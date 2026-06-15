@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import clientPromise from "@/lib/mongodb"
 
 export async function POST(req: Request) {
   try {
@@ -8,7 +9,23 @@ export async function POST(req: Request) {
     // Create a simple notification string
     const message = `🚨 Post "${content.substring(0, 30)}..." has reached ${reports} reports!`
 
-    console.log(message) // Just to see it in server logs
+    console.log("Saving MCC Notification:", message)
+
+    const client = await clientPromise
+    const db = client.db()
+
+    const newNotification = {
+      id: Date.now(),
+      type: "critical_report",
+      title: "Critical Community Report Escalated",
+      message: message,
+      timestamp: new Date().toISOString(),
+      issueId: postId || null,
+      read: false,
+      userType: "mcc"
+    }
+
+    await db.collection("notifications").insertOne(newNotification)
 
     // Send the message back (for dashboard polling)
     return NextResponse.json({ success: true, message })

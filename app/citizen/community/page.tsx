@@ -29,116 +29,194 @@ export default function CommunityPage() {
   const [posts, setPosts] = useState<Post[]>([])
 
   // Track which posts have already triggered notifications
-  const [notifiedPosts, setNotifiedPosts] = useState<Set<number>>(new Set())
+  const [notifiedPosts, setNotifiedPosts] = useState<Set<any>>(new Set())
 
-  // Initial mock posts
+  // Load posts from MongoDB API
   useEffect(() => {
-    const initialPosts: Post[] = [
-      {
-        id: 1,
-        user: "Priya Shetty",
-        image: "/pothole.webp",
-        content: "Huge pothole on Car Street! Be careful.",
-        likes: 12,
-        comments: [{ user: "Rahul", text: "Yes! It's dangerous" }],
-        reposts: 2,
-        reports: 49,
-        userLiked: false,
-        userReposted: false,
-        userReported: false,
-        notificationSent: false
-      },
-      {
-        id: 2,
-        user: "Rahul Kumar",
-        image: "/garbage.png",
-        content: "Garbage collection delayed in Kadri area.",
-        likes: 8,
-        comments: [],
-        reposts: 1,
-        reports: 0,
-        userLiked: false,
-        userReposted: false,
-        userReported: false,
-        notificationSent: false
-      },
-      {
-        id: 3,
-        user: "You",
-        image: "/streetlight.png",
-        content: "Streetlight not working near my home.",
-        likes: 5,
-        comments: [],
-        reposts: 0,
-        reports: 0,
-        userLiked: false,
-        userReposted: false,
-        userReported: false,
-        notificationSent: false
+    async function fetchPosts() {
+      try {
+        const res = await fetch("/api/community")
+        if (res.ok) {
+          const data = await res.json()
+          setPosts(data)
+        }
+      } catch (err) {
+        console.error("Failed to fetch posts from DB, using mock fallback:", err)
+        const initialPosts: Post[] = [
+          {
+            id: 1,
+            user: "Priya Shetty",
+            image: "/pothole.webp",
+            content: "Huge pothole on Car Street! Be careful.",
+            likes: 12,
+            comments: [{ user: "Rahul", text: "Yes! It's dangerous" }],
+            reposts: 2,
+            reports: 49,
+            userLiked: false,
+            userReposted: false,
+            userReported: false,
+            notificationSent: false
+          },
+          {
+            id: 2,
+            user: "Rahul Kumar",
+            image: "/garbage.png",
+            content: "Garbage collection delayed in Kadri area.",
+            likes: 8,
+            comments: [],
+            reposts: 1,
+            reports: 0,
+            userLiked: false,
+            userReposted: false,
+            userReported: false,
+            notificationSent: false
+          },
+          {
+            id: 3,
+            user: "You",
+            image: "/streetlight.png",
+            content: "Streetlight not working near my home.",
+            likes: 5,
+            comments: [],
+            reposts: 0,
+            reports: 0,
+            userLiked: false,
+            userReposted: false,
+            userReported: false,
+            notificationSent: false
+          }
+        ]
+        setPosts(initialPosts)
       }
-    ]
-    setPosts(initialPosts)
+    }
+    fetchPosts()
   }, [])
 
   // Like a post - user can only like once
-  const handleLike = (id: number) => {
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === id && !p.userLiked) {
-          return { ...p, likes: p.likes + 1, userLiked: true }
-        }
-        return p
+  const handleLike = async (id: any) => {
+    try {
+      const res = await fetch(`/api/community/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "like" })
       })
-    )
+      if (res.ok) {
+        const data = await res.json()
+        setPosts(prev => prev.map(p => p.id === id ? { ...p, ...data.post } : p))
+      }
+    } catch (err) {
+      console.error(err)
+      setPosts((prev) =>
+        prev.map((p) => {
+          if (p.id === id && !p.userLiked) {
+            return { ...p, likes: p.likes + 1, userLiked: true }
+          }
+          return p
+        })
+      )
+    }
   }
 
   // Repost a post - user can only repost once
-  const handleRepost = (id: number) => {
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === id && !p.userReposted) {
-          return { ...p, reposts: p.reposts + 1, userReposted: true }
-        }
-        return p
+  const handleRepost = async (id: any) => {
+    try {
+      const res = await fetch(`/api/community/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "repost" })
       })
-    )
+      if (res.ok) {
+        const data = await res.json()
+        setPosts(prev => prev.map(p => p.id === id ? { ...p, ...data.post } : p))
+      }
+    } catch (err) {
+      console.error(err)
+      setPosts((prev) =>
+        prev.map((p) => {
+          if (p.id === id && !p.userReposted) {
+            return { ...p, reposts: p.reposts + 1, userReposted: true }
+          }
+          return p
+        })
+      )
+    }
   }
 
   // Report a post - user can only report once per post
-  const handleReport = (id: number) => {
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === id && !p.userReported) {
-          const newReportCount = p.reports + 1
-          const updatedPost = { 
-            ...p, 
-            reports: newReportCount, 
-            userReported: true 
-          }
-
-          // Send notification when reports reach 50 and notification hasn't been sent
-          if (newReportCount >= 50 && !notifiedPosts.has(id)) {
-            sendMccNotification(updatedPost)
-            setNotifiedPosts(prev => new Set(prev).add(id))
-          }
-
-          return updatedPost
-        }
-        return p
+  const handleReport = async (id: any) => {
+    try {
+      const res = await fetch(`/api/community/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "report" })
       })
-    )
+      if (res.ok) {
+        const data = await res.json()
+        const updatedPost = data.post
+        setPosts(prev => prev.map(p => p.id === id ? { ...p, ...updatedPost } : p))
+
+        // Send notification when reports reach 50 and notification hasn't been sent
+        if (updatedPost.reports >= 50 && !notifiedPosts.has(id)) {
+          sendMccNotification(updatedPost)
+          setNotifiedPosts(prev => {
+            const newSet = new Set(prev)
+            newSet.add(id)
+            return newSet
+          })
+        }
+      }
+    } catch (err) {
+      console.error(err)
+      setPosts((prev) =>
+        prev.map((p) => {
+          if (p.id === id && !p.userReported) {
+            const newReportCount = p.reports + 1
+            const updatedPost = { 
+              ...p, 
+              reports: newReportCount, 
+              userReported: true 
+            }
+
+            if (newReportCount >= 50 && !notifiedPosts.has(id)) {
+              sendMccNotification(updatedPost)
+              setNotifiedPosts(prev => {
+                const newSet = new Set(prev)
+                newSet.add(id)
+                return newSet
+              })
+            }
+
+            return updatedPost
+          }
+          return p
+        })
+      )
+    }
   }
 
   // Add a comment - user can add unlimited comments
-  const handleAddComment = (id: number, text: string) => {
+  const handleAddComment = async (id: any, text: string) => {
     if (!text.trim()) return
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === id
-          ? { ...p, comments: [...p.comments, { user: "You", text }] }
-          : p
+    try {
+      const res = await fetch(`/api/community/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "comment", commentText: text, user: "You" })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setPosts(prev => prev.map(p => p.id === id ? { ...p, ...data.post } : p))
+      }
+    } catch (err) {
+      console.error(err)
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === id
+            ? { ...p, comments: [...p.comments, { user: "You", text }] }
+            : p
+        )
       )
-    )
+    }
   }
 
   // Send notification to MCC

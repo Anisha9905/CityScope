@@ -25,3 +25,105 @@ The CivicAI platform goes beyond just classification—it creates a smart grieva
 This project not only demonstrates the power of artificial intelligence in solving real-world problems but also has the potential to scale across multiple cities and states, making civic governance more efficient and citizen-friendly.
 
 In essence, CivicAI empowers citizens, strengthens governance, and contributes toward building the Smart Cities of the future.
+
+---
+
+## 🛠 Reorganized Project Structure
+
+The machine learning components have been separated into a dedicated `ml/` directory to keep the root clean and differentiate between the frontend dashboard and the AI model codebase:
+
+```
+CityScope/
+├── app/                  # Next.js pages, layouts, and API routes
+├── components/           # Reusable UI components (React/Shadcn)
+├── lib/                  # Shared utility functions and database configs
+├── public/               # Static assets (images, icons)
+├── styles/               # CSS and styling files
+├── utils/                # Next.js auxiliary utility modules
+├── ml/                   # Machine Learning Model & CLI Scripts (Separated)
+│   ├── .streamlit/       # Streamlit server and user configuration
+│   ├── App.py            # Streamlit Interactive Web Application
+│   ├── Predict.py        # CLI prediction script
+│   ├── Train.py          # Model training script
+│   ├── requirements.txt  # Python dependencies for ML
+│   ├── best.pt           # Trained YOLOv8 classification weights
+│   ├── yolov8n-cls.pt    # Pre-trained YOLOv8 classification weights
+│   └── *.png, *.jpg, *.csv, *.cache  # Training graphs, reports, and caches
+└── package.json          # Node/Next.js dependencies and run scripts
+```
+
+---
+
+## 🚀 How to Run the Project
+
+This project consists of two separate components: a **Next.js Frontend Dashboard** and a **Streamlit ML Classifier**. They can be run independently.
+
+### 1. Next.js Frontend Dashboard
+
+The frontend application provides the main civic issue reporting portal, maps, and MCC staff dashboard.
+
+#### Prerequisites
+- **Node.js** (v18.x or higher recommended)
+- **npm** (comes with Node.js)
+
+#### Steps to Run
+1. Open your terminal in the project root directory.
+2. Install the required Node packages:
+   ```bash
+   npm install
+   ```
+3. Start the local development server:
+   ```bash
+   npm run dev
+   ```
+4. Open your browser and navigate to:
+   ```
+   http://localhost:3000
+   ```
+
+---
+
+### 2. Machine Learning & Streamlit Classifier
+
+The Streamlit app is a dedicated portal to upload civic issue photos, execute YOLOv8 image classification, and automatically determine target departments and severity levels.
+
+#### Prerequisites
+- **Python** (v3.8 or higher recommended)
+- **pip** (Python package installer)
+
+#### Steps to Run
+1. Open your terminal in the project root directory.
+2. (Recommended) Create and activate a Python virtual environment:
+   * **Windows (Command Prompt / PowerShell):**
+     ```bash
+     python -m venv venv
+     venv\Scripts\activate
+     ```
+   * **macOS / Linux:**
+     ```bash
+     python3 -m venv venv
+     source venv/bin/activate
+     ```
+3. Install the required Python dependencies:
+   ```bash
+   pip install -r ml/requirements.txt
+   ```
+4. Run the Streamlit application:
+   ```bash
+   streamlit run ml/App.py
+   ```
+5. Streamlit will automatically open the app in your browser at:
+   ```
+   http://localhost:8501
+   ```
+
+#### Additional ML Scripts
+- **Model Inference CLI (`ml/Predict.py`):** Runs predictions on a test image. Customize `test.jpg` and execute with:
+  ```bash
+  python ml/Predict.py
+  ```
+- **Model Training (`ml/Train.py`):** Retrains the classifier. Run with:
+  ```bash
+  python ml/Train.py
+  ```
+

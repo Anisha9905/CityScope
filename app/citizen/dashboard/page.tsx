@@ -37,19 +37,23 @@ export default function CitizenDashboard() {
     { id: 3, title: "Water Supply Disruption Notice", time: "1 day ago" },
   ])
 
-  const [issues, setIssues] = useState<Issue[]>(() => {
-    if (typeof window !== "undefined") {
-      const savedIssues = localStorage.getItem("citizenIssues")
-      if (savedIssues) return JSON.parse(savedIssues)
-    }
-    return [
-      { id: 1, title: "Pothole on Car Street", status: "In Progress", date: "2024-01-15" },
-      { id: 2, title: "Street Light Not Working", status: "Resolved", date: "2024-01-12" },
-      { id: 3, title: "Garbage Collection Delay", status: "Pending", date: "2024-01-10" },
-    ]
-  })
+  const [issues, setIssues] = useState<Issue[]>([])
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [showBanner, setShowBanner] = useState(false)
+  const [dbConnected, setDbConnected] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    async function checkConnection() {
+      try {
+        const res = await fetch("/api/health")
+        const data = await res.json()
+        setDbConnected(data.status === "connected")
+      } catch {
+        setDbConnected(false)
+      }
+    }
+    checkConnection()
+  }, [])
 
   const handleLogout = () => router.push("/")
   const handleReportIssue = () => router.push("/map")
@@ -61,7 +65,7 @@ export default function CitizenDashboard() {
   useEffect(() => {
     async function fetchWeather() {
       try {
-        const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY
+        const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY || "6244b6aa16bc4ac20725f1f5d04fd885"
         const city = "Mangalore"
         const res = await fetch(
           `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`
@@ -116,10 +120,32 @@ export default function CitizenDashboard() {
         return "bg-gray-100 text-gray-800"
     }
   }
-  // Load issues from localStorage
+  // Load issues from MongoDB API with fallback
   useEffect(() => {
-    const saved = localStorage.getItem("citizenIssues")
-    if (saved) setIssues(JSON.parse(saved))
+    async function fetchIssues() {
+      try {
+        const res = await fetch("/api/issues")
+        if (res.ok) {
+          const data = await res.json()
+          setIssues(data)
+        }
+      } catch (err) {
+        console.error("Failed to fetch issues from database:", err)
+        const saved = localStorage.getItem("citizenIssues")
+        if (saved) {
+          setIssues(JSON.parse(saved))
+        } else {
+          setIssues([
+            { id: 1, title: "Pothole on Car Street", status: "In Progress", date: "2024-01-15" },
+            { id: 2, title: "Street Light Not Working", status: "Resolved", date: "2024-01-12" },
+            { id: 3, title: "Garbage Collection Delay", status: "Pending", date: "2024-01-10" },
+          ])
+        }
+      }
+    }
+    fetchIssues()
+    const interval = setInterval(fetchIssues, 5000)
+    return () => clearInterval(interval)
   }, [])
 
   return (
@@ -140,6 +166,16 @@ export default function CitizenDashboard() {
           </div>
 
           <div className="flex items-center gap-3">
+            {dbConnected === true && (
+              <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                🟢 DB Connected
+              </Badge>
+            )}
+            {dbConnected === false && (
+              <Badge variant="destructive">
+                🔴 DB Disconnected
+              </Badge>
+            )}
             <NotificationBell userType="citizen" />
             <Avatar
               className="w-8 h-8 cursor-pointer hover:ring-2 hover:ring-blue-300 transition-all"
@@ -245,7 +281,52 @@ export default function CitizenDashboard() {
                     ))
                   )}
                 </div>
-      </CardContent>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Weather Widget */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Cloud className="w-5 h-5" /> Mangalore Weather
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-center">
+                  <div className="text-3xl font-bold gradient-text">{weather.temp}</div>
+                  <div className="text-muted-foreground">{weather.condition}</div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Eye className="w-4 h-4 text-blue-500" /> {weather.humidity}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Wind className="w-4 h-4 text-blue-500" /> {weather.windSpeed}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Local News */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Local Updates</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {news.map((item) => (
+                    <div key={item.id} className="border-l-2 border-blue-200 pl-3">
+                      <h4 className="font-medium text-sm leading-tight">{item.title}</h4>
+                      <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                        <Clock className="w-3 h-3" /> {item.time}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
             </Card>
           </div>
         </div>
