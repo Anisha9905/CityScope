@@ -1,6 +1,6 @@
 🌍 Civic Issue Classifier – Description
 
-The CivicAI SIH Project is an AI-powered civic issue reporting and management platform designed to make cities smarter, more efficient, and responsive to citizen needs.
+The  CityScope: Smart City Initiative Project is an AI-powered civic issue reporting and management platform designed to make cities smarter, more efficient, and responsive to citizen needs.
 
 In today’s world, a large number of urban challenges such as garbage accumulation, potholes, broken streetlights, water logging, and floods often go unnoticed or take too long to resolve due to delays in reporting and lack of proper routing to the right departments. CivicAI bridges this gap by allowing citizens to simply upload a photo of an issue.
 
