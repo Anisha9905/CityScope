@@ -2,9 +2,12 @@ import streamlit as st
 from ultralytics import YOLO
 from PIL import Image
 
+import os
+
 @st.cache_resource
 def load_model():
-    return YOLO("best.pt")
+    model_path = os.path.join(os.path.dirname(__file__), "best.pt")
+    return YOLO(model_path)
 
 model = load_model()
 

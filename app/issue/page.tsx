@@ -1,7 +1,7 @@
 // app/issue/page.tsx
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation" 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -205,7 +205,7 @@ const GarbageTruckTracker: React.FC<{ filteredTrucks: TruckLocation[] }> = ({ fi
 
 // --- 4. MAIN PAGE COMPONENT ---
 
-export default function IssuePage() {
+function IssuePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -415,5 +415,18 @@ export default function IssuePage() {
       </div>
     </div>
     </div>
- );
+  );
+}
+
+export default function IssuePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <Loader2 className="w-10 h-10 animate-spin text-purple-600" />
+        <span className="ml-2 text-lg text-purple-600 mt-3">Loading portal...</span>
+      </div>
+    }>
+      <IssuePageContent />
+    </Suspense>
+  );
 }
